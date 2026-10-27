@@ -157,6 +157,33 @@ export const suggestWord = onCall({ secrets: [anthropicApiKey] }, async (request
   );
 });
 
+// --- suggestSentence -----------------------------------------------------------
+
+const SentenceSchema = z.object({
+  sentence: z.string().describe('One short, simple example sentence in the target language that uses the word.'),
+});
+
+export type SentenceSuggestion = z.infer<typeof SentenceSchema>;
+
+export const suggestSentence = onCall({ secrets: [anthropicApiKey] }, async (request): Promise<SentenceSuggestion> => {
+  requireAuth(request);
+  const language = requireLanguage(request.data?.lang);
+  const native = requireNativeLanguage(request.data?.nativeLang);
+  const word = requireString(request.data?.word, 'word', 100);
+  const translations: string[] = Array.isArray(request.data?.translations)
+    ? request.data.translations.filter((t: unknown): t is string => typeof t === 'string').slice(0, 10)
+    : [];
+
+  return parseWithClaude(
+    `You write example sentences for a ${native.name} speaker learning ${language.name} vocabulary. ` +
+      'Write exactly one natural, everyday sentence of 5-12 words at a beginner (A2) level that clearly shows what the ' +
+      'word means. Use the word itself (a different grammatical form is fine) and avoid other rare words. ' +
+      `If translations are given, use the word in that meaning. ${language.notes}`,
+    `Target language: ${language.name}\nWord: ${word}\nMeaning (${native.name}): ${translations.join(', ') || '(not given)'}`,
+    SentenceSchema,
+  );
+});
+
 // --- checkAnswer ---------------------------------------------------------------
 
 /** translate: foreign word → native; recall: native → foreign word; cloze: fill the gap in the sentence. */
@@ -231,3 +258,5 @@ export const checkAnswer = onCall({ secrets: [anthropicApiKey] }, async (request
     GradeSchema,
   );
 });
+
+export * from './billing.js';

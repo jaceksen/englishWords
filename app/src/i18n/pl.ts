@@ -101,6 +101,11 @@ const pl = {
     translations: (language: string) => `Tłumaczenie (${language.toLowerCase()}, oddziel przecinkami)`,
     translationsPlaceholder: 'np. niechętny, oporny',
     suggest: '✨ Podpowiedz tłumaczenie',
+    suggestSentence: '✨ Podpowiedz zdanie ze słówkiem',
+    reset: 'Zeruj punktację',
+    resetTitle: 'Wyzerować punktację tego słówka?',
+    score: (correct: number, asked: number) => `Wynik w quizach: ${correct} / ${asked} poprawnych`,
+    resetDone: '✓ Punktacja wyzerowana',
   },
   ranges: {
     today: 'Dzisiaj',
@@ -197,6 +202,11 @@ const pl = {
     limitReached: (limit: number) =>
       `W planie darmowym możesz zapisać do ${limit} słówek. Przejdź na Pro, aby dodawać bez limitu.`,
     upgrade: 'Zobacz plany Pro',
+    choose: 'Dotknij planu, aby go kupić. Płatność obsługuje Stripe.',
+    lifetimeOwned: 'Masz Pro na zawsze 💎 Dziękujemy!',
+    opening: 'Otwieram płatność…',
+    manage: 'Płatności i faktury',
+    billingError: "Nie udało się otworzyć płatności. Spróbuj ponownie.",
   },
 };
 

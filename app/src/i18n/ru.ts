@@ -100,6 +100,11 @@ const ru: Translations = {
     translations: (language) => `Перевод (${language.toLowerCase()}, через запятую)`,
     translationsPlaceholder: 'напр. неохотный, нежелающий',
     suggest: '✨ Предложить перевод',
+    suggestSentence: '✨ Предложить пример предложения',
+    reset: 'Сбросить результат',
+    resetTitle: 'Сбросить результат этого слова?',
+    score: (correct, asked) => `Результат в тестах: ${correct} / ${asked} правильно`,
+    resetDone: '✓ Результат сброшен',
   },
   ranges: {
     today: 'Сегодня',
@@ -195,6 +200,11 @@ const ru: Translations = {
     limitReached: (limit) =>
       `В бесплатном тарифе можно сохранить до ${limit} слов. Перейдите на Pro, чтобы добавлять слова без ограничений.`,
     upgrade: 'Тарифы Pro',
+    choose: 'Нажмите на тариф, чтобы купить его. Платежи обрабатывает Stripe.',
+    lifetimeOwned: 'У вас Pro навсегда 💎 Спасибо!',
+    opening: 'Открываю оплату…',
+    manage: 'Платежи и счета',
+    billingError: "Не удалось открыть страницу оплаты. Попробуйте ещё раз.",
   },
 };
 

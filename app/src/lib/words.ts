@@ -121,6 +121,13 @@ export function deleteWord(uid: string, id: string) {
   return deleteDoc(doc(db, 'users', uid, 'words', id));
 }
 
+/** Back to a new word: no quiz history, lowest box. */
+export function resetStats(uid: string, id: string) {
+  return updateDoc(doc(db, 'users', uid, 'words', id), {
+    stats: { asked: 0, correct: 0, box: 0, lastAskedAt: null },
+  });
+}
+
 export function recordAnswer(uid: string, word: Word, correct: boolean) {
   const box = correct ? Math.min(word.stats.box + 1, MAX_BOX) : 0;
   // Keep the in-memory copy current: the same word can come back in a later quiz round.

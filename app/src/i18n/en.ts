@@ -100,6 +100,11 @@ const en: Translations = {
     translations: (language) => `Translation (${language}, separate with commas)`,
     translationsPlaceholder: 'e.g. reluctant, unwilling',
     suggest: '✨ Suggest translation',
+    suggestSentence: '✨ Suggest an example sentence',
+    reset: 'Reset score',
+    resetTitle: "Reset this word's score?",
+    score: (correct, asked) => `Quiz score: ${correct} / ${asked} correct`,
+    resetDone: '✓ Score reset',
   },
   ranges: {
     today: 'Today',
@@ -194,6 +199,11 @@ const en: Translations = {
     unlimited: (count) => `Saved words: ${count} · no limit`,
     limitReached: (limit) => `The free plan lets you save up to ${limit} words. Upgrade to Pro for unlimited words.`,
     upgrade: 'See Pro plans',
+    choose: 'Tap a plan to buy it. Payments are handled by Stripe.',
+    lifetimeOwned: 'You have Pro forever 💎 Thank you!',
+    opening: 'Opening payment…',
+    manage: 'Payments and invoices',
+    billingError: "Couldn't open the payment page. Please try again.",
   },
 };
 

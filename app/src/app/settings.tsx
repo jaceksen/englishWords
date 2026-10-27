@@ -8,6 +8,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { UI_LANGUAGES, type UiLanguageCode } from '@/i18n';
 import { useAuth } from '@/lib/auth';
+import { buyPlan, manageBilling } from '@/lib/billing';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
 import { PLANS, type PlanCode } from '@/lib/plans';
 import { useSettings } from '@/lib/settings';
@@ -56,8 +57,10 @@ function OptionPicker<T extends string>({
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
-  const { t, languageCode, setLanguage, uiLanguageCode, setUiLanguage, planCode, plan, setPlan } = useSettings();
+  const { t, languageCode, setLanguage, uiLanguageCode, setUiLanguage, planCode, plan } = useSettings();
   const [wordCount, setWordCount] = useState<number | null>(null);
+  const [billingBusy, setBillingBusy] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -65,6 +68,26 @@ export default function SettingsScreen() {
       .then(setWordCount)
       .catch(() => setWordCount(null));
   }, [user]);
+
+  // Plans change only after Stripe confirms a payment; the new plan then arrives through useSettings.
+  async function runBilling(action: () => Promise<void>) {
+    setBillingBusy(true);
+    setBillingError(null);
+    try {
+      await action();
+    } catch {
+      setBillingError(t.plans.billingError);
+    } finally {
+      setBillingBusy(false);
+    }
+  }
+
+  function choosePlan(code: PlanCode) {
+    if (billingBusy || code === planCode || planCode === 'pro_lifetime') return;
+    // Going back to free means cancelling the subscription, which Stripe's portal does.
+    if (code === 'free') runBilling(manageBilling);
+    else runBilling(() => buyPlan(code));
+  }
 
   const planOptions: Option<PlanCode>[] = [
     { value: 'free', flag: PLANS.free.icon, label: t.plans.free, detail: t.plans.freeDetail(PLANS.free.wordLimit) },
@@ -125,7 +148,28 @@ export default function SettingsScreen() {
               {plan.wordLimit === null ? t.plans.unlimited(wordCount) : t.plans.usage(wordCount, plan.wordLimit)}
             </ThemedText>
           )}
-          <OptionPicker value={planCode} onChange={setPlan} options={planOptions} />
+          <ThemedText type="small" themeColor="textSecondary">
+            {planCode === 'pro_lifetime' ? t.plans.lifetimeOwned : t.plans.choose}
+          </ThemedText>
+          <OptionPicker value={planCode} onChange={choosePlan} options={planOptions} />
+          {billingBusy && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {t.plans.opening}
+            </ThemedText>
+          )}
+          {billingError && (
+            <ThemedText type="small" themeColor="danger">
+              {billingError}
+            </ThemedText>
+          )}
+          {planCode !== 'free' && (
+            <Button
+              title={t.plans.manage}
+              variant="secondary"
+              onPress={() => runBilling(manageBilling)}
+              disabled={billingBusy}
+            />
+          )}
         </View>
 
         <View style={styles.section}>

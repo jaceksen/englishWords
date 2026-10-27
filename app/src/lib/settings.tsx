@@ -27,7 +27,6 @@ type SettingsState = {
   setUiLanguage: (code: UiLanguageCode) => Promise<void>;
   planCode: PlanCode;
   plan: Plan;
-  setPlan: (code: PlanCode) => Promise<void>;
   t: Translations;
 };
 
@@ -73,11 +72,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     await save({ uiLanguage: code });
   }
 
-  async function setPlan(code: PlanCode) {
-    setPlanCode(code);
-    if (user) await setDoc(doc(db, 'users', user.uid), { plan: code }, { merge: true });
-  }
-
   return (
     <SettingsContext
       value={{
@@ -89,7 +83,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setUiLanguage,
         planCode,
         plan: PLANS[planCode],
-        setPlan,
         t: getTranslations(uiLanguageCode),
       }}>
       {children}

@@ -9,12 +9,12 @@ import { ScreenBackground } from '@/components/screen-background';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import type { UiLanguageCode } from '@/i18n';
-import { aiErrorMessage, suggestWord } from '@/lib/ai';
+import { aiErrorMessage, suggestSentence, suggestWord } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
 import { useSettings } from '@/lib/settings';
 import { useSpeechInput } from '@/lib/speech';
-import { addWord, countWords, deleteWord, getWord, updateWord, type WordInput } from '@/lib/words';
+import { addWord, countWords, deleteWord, getWord, resetStats, updateWord, type Word, type WordInput } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-add.jpg');
 
@@ -46,8 +46,11 @@ export default function AddWordScreen() {
   const [partOfSpeech, setPartOfSpeech] = useState('');
   const [definition, setDefinition] = useState('');
   const [suggesting, setSuggesting] = useState(false);
+  const [suggestingSentence, setSuggestingSentence] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<Word['stats'] | null>(null);
+  const [resetDone, setResetDone] = useState(false);
   const wordLimit = settings.plan.wordLimit;
   const [wordCount, setWordCount] = useState<number | null>(null);
   // The free plan caps how many words can be saved; editing an existing word is always allowed.
@@ -59,6 +62,7 @@ export default function AddWordScreen() {
     getWord(user.uid, id).then((existing) => {
       if (!existing) return;
       setLang(existing.lang);
+      setStats(existing.stats);
       setNativeLang(existing.nativeLang);
       setWord(existing.word);
       setContext(existing.context);
@@ -114,6 +118,26 @@ export default function AddWordScreen() {
     }
   }
 
+  async function suggestExample() {
+    if (!word.trim()) return;
+    setSuggestingSentence(true);
+    setError(null);
+    try {
+      setContext(
+        await suggestSentence({
+          lang,
+          nativeLang,
+          word: word.trim(),
+          translations: splitTranslations(translations),
+        }),
+      );
+    } catch (e) {
+      setError(aiErrorMessage(e, t));
+    } finally {
+      setSuggestingSentence(false);
+    }
+  }
+
   async function save() {
     if (!user || !word.trim()) return;
     setSaving(true);
@@ -165,6 +189,26 @@ export default function AddWordScreen() {
     ]);
   }
 
+  function confirmReset() {
+    if (!user || !id) return;
+    Alert.alert(t.add.resetTitle, word, [
+      { text: t.common.cancel, style: 'cancel' },
+      {
+        text: t.add.reset,
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await resetStats(user.uid, id);
+            setStats({ asked: 0, correct: 0, box: 0, lastAskedAt: null });
+            setResetDone(true);
+          } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+          }
+        },
+      },
+    ]);
+  }
+
   return (
     <ScreenBackground source={BACKGROUND} style={styles.container}>
       <Stack.Screen options={{ title: `${language.flag} ${id ? t.titles.editWord : t.titles.addWord}` }} />
@@ -205,7 +249,14 @@ export default function AddWordScreen() {
             variant="secondary"
             onPress={suggest}
             loading={suggesting}
-            disabled={!word.trim()}
+            disabled={!word.trim() || suggestingSentence}
+          />
+          <Button
+            title={t.add.suggestSentence}
+            variant="secondary"
+            onPress={suggestExample}
+            loading={suggestingSentence}
+            disabled={!word.trim() || suggesting}
           />
           {(!!partOfSpeech || !!definition) && (
             <ThemedView type="backgroundElement" style={styles.info}>
@@ -226,8 +277,21 @@ export default function AddWordScreen() {
             title={t.common.save}
             onPress={save}
             loading={saving}
-            disabled={!word.trim() || suggesting || limitReached}
+            disabled={!word.trim() || suggesting || suggestingSentence || limitReached}
           />
+          {!!id && stats && (
+            <>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
+                {resetDone ? t.add.resetDone : t.add.score(stats.correct, stats.asked)}
+              </ThemedText>
+              <Button
+                title={t.add.reset}
+                variant="secondary"
+                onPress={confirmReset}
+                disabled={saving || (stats.asked === 0 && stats.box === 0)}
+              />
+            </>
+          )}
           {!!id && <Button title={t.common.delete} variant="danger" onPress={confirmDelete} disabled={saving} />}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -242,6 +306,9 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.three,
+  },
+  center: {
+    textAlign: 'center',
   },
   info: {
     padding: Spacing.three,

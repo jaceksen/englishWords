@@ -101,6 +101,11 @@ const fr: Translations = {
     translations: (language) => `Traduction (${language.toLowerCase()}, séparée par des virgules)`,
     translationsPlaceholder: 'p. ex. réticent, peu enclin',
     suggest: '✨ Suggérer une traduction',
+    suggestSentence: '✨ Suggérer une phrase d’exemple',
+    reset: 'Réinitialiser le score',
+    resetTitle: 'Réinitialiser le score de ce mot ?',
+    score: (correct, asked) => `Score aux quiz : ${correct} / ${asked} bonnes réponses`,
+    resetDone: '✓ Score réinitialisé',
   },
   ranges: {
     today: 'Aujourd’hui',
@@ -196,6 +201,11 @@ const fr: Translations = {
     limitReached: (limit) =>
       `La formule gratuite permet d’enregistrer jusqu’à ${limit} mots. Passez à Pro pour ajouter des mots sans limite.`,
     upgrade: 'Voir les formules Pro',
+    choose: 'Touchez une formule pour l’acheter. Les paiements sont gérés par Stripe.',
+    lifetimeOwned: 'Vous avez Pro à vie 💎 Merci !',
+    opening: 'Ouverture du paiement…',
+    manage: 'Paiements et factures',
+    billingError: "Impossible d’ouvrir la page de paiement. Réessayez.",
   },
 };
 

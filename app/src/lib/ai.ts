@@ -26,6 +26,15 @@ type SuggestWordRequest = {
   context: string;
 };
 
+type SuggestSentenceRequest = {
+  lang: LanguageCode;
+  /** Language of `translations`. */
+  nativeLang: UiLanguageCode;
+  word: string;
+  /** Meaning to use the word in, when known. */
+  translations: string[];
+};
+
 type CheckAnswerRequest = {
   lang: LanguageCode;
   /** Language of the word's stored translations. */
@@ -40,10 +49,15 @@ type CheckAnswerRequest = {
 };
 
 const suggestWordFn = httpsCallable<SuggestWordRequest, Suggestion>(functions, 'suggestWord');
+const suggestSentenceFn = httpsCallable<SuggestSentenceRequest, { sentence: string }>(functions, 'suggestSentence');
 const checkAnswerFn = httpsCallable<CheckAnswerRequest, Grade>(functions, 'checkAnswer');
 
 export async function suggestWord(request: SuggestWordRequest) {
   return (await suggestWordFn(request)).data;
+}
+
+export async function suggestSentence(request: SuggestSentenceRequest) {
+  return (await suggestSentenceFn(request)).data.sentence;
 }
 
 export async function checkAnswer(request: CheckAnswerRequest) {

@@ -4,6 +4,7 @@ import { Alert, Pressable, SectionList, StyleSheet, TextInput, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { MasteryBadge } from '@/components/mastery-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
 import { ThemedView } from '@/components/themed-view';
@@ -12,7 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { formatDayHeader } from '@/lib/dates';
 import { useSettings } from '@/lib/settings';
-import { deleteWord, MAX_BOX, subscribeWords, type Word } from '@/lib/words';
+import { deleteWord, subscribeWords, type Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-home.jpg');
 
@@ -99,20 +100,20 @@ export default function WordsScreen() {
               onPress={() => router.push({ pathname: '/add', params: { id: item.id } })}
               onLongPress={() => confirmDelete(item)}>
               <ThemedView type="backgroundElement" style={styles.card}>
-                <View style={styles.cardHeader}>
+                <View style={styles.cardText}>
                   <ThemedText type="smallBold" style={styles.word}>
                     {item.word}
                   </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {'●'.repeat(item.stats.box) + '○'.repeat(MAX_BOX - item.stats.box)}
-                  </ThemedText>
+                  {item.translations.length > 0 && (
+                    <ThemedText type="small">{item.translations.join(', ')}</ThemedText>
+                  )}
+                  {!!item.context && (
+                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
+                      „{item.context}”
+                    </ThemedText>
+                  )}
                 </View>
-                {item.translations.length > 0 && <ThemedText type="small">{item.translations.join(', ')}</ThemedText>}
-                {!!item.context && (
-                  <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
-                    „{item.context}”
-                  </ThemedText>
-                )}
+                <MasteryBadge box={item.stats.box} />
               </ThemedView>
             </Pressable>
           )}
@@ -169,12 +170,12 @@ const styles = StyleSheet.create({
   card: {
     padding: Spacing.three,
     borderRadius: Spacing.three,
-    gap: Spacing.two,
-  },
-  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: Spacing.three,
+  },
+  cardText: {
+    flex: 1,
     gap: Spacing.two,
   },
   word: {

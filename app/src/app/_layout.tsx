@@ -28,6 +28,7 @@ function RootNavigator() {
         <Stack.Screen name="quiz/voice" options={{ title: t.titles.voiceQuiz }} />
         <Stack.Screen name="quiz/summary" options={{ title: t.titles.summary, headerBackVisible: false }} />
         <Stack.Screen name="settings" options={{ title: t.titles.settings }} />
+        <Stack.Screen name="billing" options={{ headerShown: false, animation: 'none' }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="login" options={{ headerShown: false }} />

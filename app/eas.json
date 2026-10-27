@@ -20,6 +20,17 @@
         "buildType": "apk"
       },
       "node": "24.12.0"
+    },
+    "production": {
+      "credentialsSource": "local",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "node": "24.12.0"
     }
+  },
+  "submit": {
+    "production": {}
   }
 }

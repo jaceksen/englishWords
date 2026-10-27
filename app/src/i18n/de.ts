@@ -101,6 +101,11 @@ const de: Translations = {
     translations: (language) => `Übersetzung (${language}, durch Kommas getrennt)`,
     translationsPlaceholder: 'z. B. widerwillig, ungern',
     suggest: '✨ Übersetzung vorschlagen',
+    suggestSentence: '✨ Beispielsatz vorschlagen',
+    reset: 'Punkte zurücksetzen',
+    resetTitle: 'Punkte für dieses Wort zurücksetzen?',
+    score: (correct, asked) => `Quiz-Ergebnis: ${correct} / ${asked} richtig`,
+    resetDone: '✓ Punkte zurückgesetzt',
   },
   ranges: {
     today: 'Heute',
@@ -196,6 +201,11 @@ const de: Translations = {
     limitReached: (limit) =>
       `Im kostenlosen Tarif kannst du bis zu ${limit} Wörter speichern. Wechsle zu Pro für unbegrenzt viele Wörter.`,
     upgrade: 'Pro-Tarife ansehen',
+    choose: 'Tippe auf einen Tarif, um ihn zu kaufen. Die Zahlung läuft über Stripe.',
+    lifetimeOwned: 'Du hast Pro für immer 💎 Danke!',
+    opening: 'Zahlung wird geöffnet…',
+    manage: 'Zahlungen und Rechnungen',
+    billingError: "Die Zahlungsseite konnte nicht geöffnet werden. Bitte versuche es erneut.",
   },
 };
 

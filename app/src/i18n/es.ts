@@ -100,6 +100,11 @@ const es: Translations = {
     translations: (language) => `Traducción (${language.toLowerCase()}, separada por comas)`,
     translationsPlaceholder: 'p. ej. reacio, renuente',
     suggest: '✨ Sugerir traducción',
+    suggestSentence: '✨ Sugerir una frase de ejemplo',
+    reset: 'Reiniciar puntuación',
+    resetTitle: '¿Reiniciar la puntuación de esta palabra?',
+    score: (correct, asked) => `Resultado en quizzes: ${correct} / ${asked} correctas`,
+    resetDone: '✓ Puntuación reiniciada',
   },
   ranges: {
     today: 'Hoy',
@@ -195,6 +200,11 @@ const es: Translations = {
     limitReached: (limit) =>
       `El plan gratuito permite guardar hasta ${limit} palabras. Pásate a Pro para añadir palabras sin límite.`,
     upgrade: 'Ver planes Pro',
+    choose: 'Toca un plan para comprarlo. Los pagos los gestiona Stripe.',
+    lifetimeOwned: 'Tienes Pro para siempre 💎 ¡Gracias!',
+    opening: 'Abriendo el pago…',
+    manage: 'Pagos y facturas',
+    billingError: "No se pudo abrir la página de pago. Inténtalo de nuevo.",
   },
 };
 
