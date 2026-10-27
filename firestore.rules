@@ -10,6 +10,15 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    // Free plans given by the admin in the Firebase console (ID = e-mail in lowercase, as in MotoTigo).
+    // Each user may read only their own grant; nobody writes from the app.
+    match /freeplans/{email} {
+      allow read: if request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == email;
+      allow write: if false;
+    }
+
     // The plan and Stripe ids are written only by Cloud Functions after a payment.
     match /users/{uid} {
       allow read, delete: if isOwner(uid);

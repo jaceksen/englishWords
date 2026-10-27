@@ -259,3 +259,4 @@ export const checkAnswer = onCall({ secrets: [anthropicApiKey] }, async (request
 });
 
 export * from './billing.js';
+export * from './tts.js';

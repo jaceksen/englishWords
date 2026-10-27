@@ -57,7 +57,8 @@ function OptionPicker<T extends string>({
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
-  const { t, languageCode, setLanguage, uiLanguage, uiLanguageCode, setUiLanguage, planCode, plan } = useSettings();
+  const { t, languageCode, setLanguage, uiLanguage, uiLanguageCode, setUiLanguage, planCode, plan, purchasedPlanCode, planGrant, hasLifetime } =
+    useSettings();
   // The same currency is shown here and charged by Stripe.
   const [currency] = useState(deviceCurrency);
   const [wordCount, setWordCount] = useState<number | null>(null);
@@ -85,10 +86,13 @@ export default function SettingsScreen() {
   }
 
   function choosePlan(code: PlanCode) {
-    if (billingBusy || code === planCode || planCode === 'pro_lifetime') return;
-    // Going back to free means cancelling the subscription, which Stripe's portal does.
-    if (code === 'free') runBilling(manageBilling);
-    else runBilling(() => buyPlan(code, currency));
+    if (billingBusy || code === planCode) return;
+    // Lifetime already covers monthly Pro.
+    if (hasLifetime && code === 'pro_monthly') return;
+    // Going back down means cancelling the subscription, which Stripe's portal does.
+    if (code === 'free' || (code === 'pro_lifetime' && hasLifetime)) {
+      if (purchasedPlanCode !== 'free') runBilling(manageBilling);
+    } else runBilling(() => buyPlan(code, currency));
   }
 
   const planOptions: Option<PlanCode>[] = [
@@ -98,6 +102,12 @@ export default function SettingsScreen() {
       flag: PLANS.pro_monthly.icon,
       label: t.plans.proMonthly,
       detail: t.plans.proMonthlyDetail(formatPrice('pro_monthly', currency, uiLanguage.locale)),
+    },
+    {
+      value: 'gold_monthly',
+      flag: PLANS.gold_monthly.icon,
+      label: t.plans.gold,
+      detail: t.plans.goldDetail(formatPrice('gold_monthly', currency, uiLanguage.locale)),
     },
     {
       value: 'pro_lifetime',
@@ -150,8 +160,17 @@ export default function SettingsScreen() {
               {plan.wordLimit === null ? t.plans.unlimited(wordCount) : t.plans.usage(wordCount, plan.wordLimit)}
             </ThemedText>
           )}
+          {/* Only when the grant, not a purchase, gives the current plan. */}
+          {planGrant && planCode !== purchasedPlanCode && (
+            <ThemedText type="small" themeColor="success">
+              {t.plans.granted(
+                planGrant.plan === 'gold_monthly' ? t.plans.gold : 'Pro',
+                planGrant.validUntil.toLocaleDateString(uiLanguage.locale, { dateStyle: 'long' }),
+              )}
+            </ThemedText>
+          )}
           <ThemedText type="small" themeColor="textSecondary">
-            {planCode === 'pro_lifetime' ? t.plans.lifetimeOwned : t.plans.choose}
+            {hasLifetime ? t.plans.lifetimeOwned : t.plans.choose}
           </ThemedText>
           <OptionPicker value={planCode} onChange={choosePlan} options={planOptions} />
           {billingBusy && (
@@ -164,7 +183,7 @@ export default function SettingsScreen() {
               {billingError}
             </ThemedText>
           )}
-          {planCode !== 'free' && (
+          {purchasedPlanCode !== 'free' && (
             <Button
               title={t.plans.manage}
               variant="secondary"

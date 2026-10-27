@@ -13,13 +13,32 @@ const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 // Stripe ids (price_…, bpc_…), kept in functions/.env.
 const monthlyPrice = defineString('STRIPE_PRICE_MONTHLY');
 const lifetimePrice = defineString('STRIPE_PRICE_LIFETIME');
+const goldPrice = defineString('STRIPE_PRICE_GOLD');
 const portalConfiguration = defineString('STRIPE_PORTAL_CONFIGURATION');
 
 // The Stripe account is shared with other apps; their webhook events carry a different `app`.
 const APP = 'vocabsprint';
 
 // Must match app/src/lib/plans.ts.
-type PlanCode = 'free' | 'pro_monthly' | 'pro_lifetime';
+type PlanCode = 'free' | 'pro_monthly' | 'gold_monthly' | 'pro_lifetime';
+type SubscriptionPlan = 'pro_monthly' | 'gold_monthly';
+const SUBSCRIPTION_PLANS: string[] = ['pro_monthly', 'gold_monthly'] satisfies SubscriptionPlan[];
+
+const PRICES = {
+  pro_monthly: monthlyPrice,
+  gold_monthly: goldPrice,
+  pro_lifetime: lifetimePrice,
+};
+
+/** Subscriptions created before Gold existed have no plan in their metadata; they are Pro. */
+function subscriptionPlan(metadata: Stripe.Metadata | null | undefined): SubscriptionPlan {
+  return metadata?.plan === 'gold_monthly' ? 'gold_monthly' : 'pro_monthly';
+}
+
+/** Lifetime Pro stays when a subscription on top of it (Gold) ends. */
+function hasLifetime(user: FirebaseFirestore.DocumentSnapshot) {
+  return user.get('stripe.lifetime') === true || user.get('plan') === 'pro_lifetime';
+}
 // Currency options set on both Stripe prices; the app shows the price in the one it sends.
 const CURRENCIES = ['usd', 'pln', 'eur'];
 
@@ -71,29 +90,33 @@ async function setPlan(uid: string, plan: PlanCode, stripeFields: Record<string,
 
 export const createCheckoutSession = onCall({ secrets: [stripeSecretKey] }, async (request) => {
   const uid = requireUid(request.auth);
-  const plan = request.data?.plan;
-  if (plan !== 'pro_monthly' && plan !== 'pro_lifetime') {
+  const plan: unknown = request.data?.plan;
+  if (plan !== 'pro_monthly' && plan !== 'gold_monthly' && plan !== 'pro_lifetime') {
     throw new HttpsError('invalid-argument', 'Unknown plan.');
   }
   const appUrl = requireReturnUrl(request.data?.returnUrl);
   // Older app versions did not send a currency; they showed dollars.
   const currency = CURRENCIES.includes(request.data?.currency) ? (request.data.currency as string) : 'usd';
-  const current = (await db().doc(`users/${uid}`).get()).get('plan');
-  if (current === 'pro_lifetime' || current === plan) {
+  const user = await db().doc(`users/${uid}`).get();
+  const lifetime = hasLifetime(user);
+  if (user.get('plan') === plan || (plan === 'pro_lifetime' && lifetime)) {
     throw new HttpsError('already-exists', 'This plan is already active.');
+  }
+  if (plan === 'pro_monthly' && lifetime) {
+    throw new HttpsError('failed-precondition', 'Lifetime already includes Pro.');
   }
 
   const customer = await customerFor(uid, request.auth?.token.email);
-  const monthly = plan === 'pro_monthly';
+  const monthly = SUBSCRIPTION_PLANS.includes(plan);
   const session = await getStripe().checkout.sessions.create({
     mode: monthly ? 'subscription' : 'payment',
     currency,
     customer,
     client_reference_id: uid,
-    line_items: [{ price: monthly ? monthlyPrice.value() : lifetimePrice.value(), quantity: 1 }],
+    line_items: [{ price: PRICES[plan].value(), quantity: 1 }],
     metadata: { app: APP, uid, plan },
     ...(monthly
-      ? { subscription_data: { metadata: { app: APP, uid } } }
+      ? { subscription_data: { metadata: { app: APP, uid, plan } } }
       : { invoice_creation: { enabled: true, invoice_data: { metadata: { app: APP, uid } } } }),
     allow_promotion_codes: true,
     success_url: returnPage(appUrl, 'success'),
@@ -138,6 +161,13 @@ export const billingReturn = onRequest((req, res) => {
 
 const ACTIVE_STATUSES: Stripe.Subscription.Status[] = ['active', 'trialing', 'past_due'];
 
+async function cancelSubscription(id: unknown) {
+  if (typeof id !== 'string') return;
+  await getStripe()
+    .subscriptions.cancel(id)
+    .catch((e) => console.warn('Could not cancel subscription', id, e));
+}
+
 export const stripeWebhook = onRequest({ secrets: [stripeSecretKey, stripeWebhookSecret] }, async (req, res) => {
   let event: Stripe.Event;
   try {
@@ -157,17 +187,23 @@ export const stripeWebhook = onRequest({ secrets: [stripeSecretKey, stripeWebhoo
       const session = event.data.object;
       const uid = session.metadata?.uid;
       if (session.metadata?.app !== APP || !uid || session.payment_status !== 'paid') break;
+      const user = await db().doc(`users/${uid}`).get();
+      const previousSubscription = user.get('stripe.subscriptionId');
+
       if (session.mode === 'payment') {
-        await setPlan(uid, 'pro_lifetime', { lifetimePaymentId: session.payment_intent });
-        // Lifetime replaces a running monthly subscription, so stop charging for it.
-        const subscriptionId = (await db().doc(`users/${uid}`).get()).get('stripe.subscriptionId');
-        if (typeof subscriptionId === 'string') {
-          await getStripe()
-            .subscriptions.cancel(subscriptionId)
-            .catch((e) => console.warn('Could not cancel subscription', subscriptionId, e));
-        }
+        // Lifetime Pro. A Gold subscription keeps running on top of it (it adds the voices); a Pro
+        // subscription is now redundant, so stop charging for it.
+        const gold = user.get('plan') === 'gold_monthly';
+        await setPlan(uid, gold ? 'gold_monthly' : 'pro_lifetime', {
+          lifetime: true,
+          lifetimePaymentId: session.payment_intent,
+        });
+        if (!gold) await cancelSubscription(previousSubscription);
       } else if (session.mode === 'subscription') {
-        await setPlan(uid, 'pro_monthly', { subscriptionId: session.subscription });
+        const plan = subscriptionPlan(session.metadata);
+        await setPlan(uid, plan, { subscriptionId: session.subscription, subscriptionPlan: plan });
+        // Switching between Pro and Gold: the new subscription replaces the old one.
+        if (previousSubscription !== session.subscription) await cancelSubscription(previousSubscription);
       }
       break;
     }
@@ -176,13 +212,15 @@ export const stripeWebhook = onRequest({ secrets: [stripeSecretKey, stripeWebhoo
       const subscription = event.data.object;
       const uid = subscription.metadata?.uid;
       if (subscription.metadata?.app !== APP || !uid) break;
-      const ref = db().doc(`users/${uid}`);
-      const user = await ref.get();
-      // A lifetime purchase is never taken back by a subscription ending.
-      if (user.get('plan') === 'pro_lifetime') break;
+      const user = await db().doc(`users/${uid}`).get();
+      // Events of a subscription that was replaced by a newer one.
       if (user.get('stripe.subscriptionId') && user.get('stripe.subscriptionId') !== subscription.id) break;
       const active = event.type === 'customer.subscription.updated' && ACTIVE_STATUSES.includes(subscription.status);
-      await setPlan(uid, active ? 'pro_monthly' : 'free', { subscriptionId: subscription.id });
+      const plan = subscriptionPlan(subscription.metadata);
+      await setPlan(uid, active ? plan : hasLifetime(user) ? 'pro_lifetime' : 'free', {
+        subscriptionId: subscription.id,
+        subscriptionPlan: plan,
+      });
       break;
     }
   }

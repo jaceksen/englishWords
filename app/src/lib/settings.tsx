@@ -14,7 +14,17 @@ import {
 import { useAuth } from '@/lib/auth';
 import { auth, db } from '@/lib/firebase';
 import { DEFAULT_LANGUAGE, isLanguageCode, LANGUAGES, type Language, type LanguageCode } from '@/lib/languages';
-import { DEFAULT_PLAN, isPlanCode, PLANS, type Plan, type PlanCode } from '@/lib/plans';
+import {
+  DEFAULT_PLAN,
+  higherPlan,
+  isPlanCode,
+  parsePlanGrant,
+  PLANS,
+  type Plan,
+  type PlanCode,
+  type PlanGrant,
+} from '@/lib/plans';
+import { setNaturalVoices } from '@/lib/speech';
 
 type SettingsState = {
   /** Language being learned. */
@@ -25,8 +35,15 @@ type SettingsState = {
   uiLanguageCode: UiLanguageCode;
   uiLanguage: UiLanguage;
   setUiLanguage: (code: UiLanguageCode) => Promise<void>;
+  /** The plan in effect: the higher of the purchased one and an admin grant. */
   planCode: PlanCode;
   plan: Plan;
+  /** Bought through Stripe; what payments and the subscription portal are about. */
+  purchasedPlanCode: PlanCode;
+  /** Plan given for free by the admin (freeplans/{email}), while valid. */
+  planGrant: PlanGrant | null;
+  /** Lifetime Pro was bought; it stays under a Gold subscription and comes back when that ends. */
+  hasLifetime: boolean;
   t: Translations;
 };
 
@@ -40,18 +57,37 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [languageCode, setLanguageCodeState] = useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [uiLanguageCode, setUiLanguageCode] = useState<UiLanguageCode>(deviceUiLanguage);
-  const [planCode, setPlanCode] = useState<PlanCode>(DEFAULT_PLAN);
+  const [purchasedPlanCode, setPurchasedPlanCode] = useState<PlanCode>(DEFAULT_PLAN);
+  const [lifetimeBought, setLifetimeBought] = useState(false);
+  const [planGrant, setPlanGrant] = useState<PlanGrant | null>(null);
+  const planCode = higherPlan(purchasedPlanCode, planGrant?.plan ?? DEFAULT_PLAN);
 
   useEffect(() => {
     if (!user) return;
     return onSnapshot(doc(db, 'users', user.uid), (snap) => {
       const data = snap.data();
-      setPlanCode(isPlanCode(data?.plan) ? data.plan : DEFAULT_PLAN);
+      setPurchasedPlanCode(isPlanCode(data?.plan) ? data.plan : DEFAULT_PLAN);
+      setLifetimeBought(data?.stripe?.lifetime === true);
       const settings = data?.settings;
       setLanguageCodeState(isLanguageCode(settings?.language) ? settings.language : DEFAULT_LANGUAGE);
       if (isUiLanguageCode(settings?.uiLanguage)) setUiLanguageCode(settings.uiLanguage);
     });
   }, [user]);
+
+  // Admin grants are keyed by e-mail; a read error must not break the purchased plan.
+  useEffect(() => {
+    const email = user?.email?.trim().toLowerCase();
+    if (!email) return;
+    return onSnapshot(
+      doc(db, 'freeplans', email),
+      (snap) => setPlanGrant(parsePlanGrant(snap.data())),
+      () => setPlanGrant(null),
+    );
+  }, [user]);
+
+  useEffect(() => {
+    setNaturalVoices(PLANS[planCode].naturalVoices);
+  }, [planCode]);
 
   // Password reset and other Firebase emails follow the app language.
   useEffect(() => {
@@ -83,6 +119,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setUiLanguage,
         planCode,
         plan: PLANS[planCode],
+        purchasedPlanCode,
+        planGrant,
+        hasLifetime: lifetimeBought || purchasedPlanCode === 'pro_lifetime',
         t: getTranslations(uiLanguageCode),
       }}>
       {children}
