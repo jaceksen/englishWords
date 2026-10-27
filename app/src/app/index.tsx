@@ -15,7 +15,7 @@ import { deleteWord, MAX_BOX, subscribeWords, type Word } from '@/lib/words';
 
 export default function WordsScreen() {
   const { user } = useAuth();
-  const { languageCode, language } = useSettings();
+  const { languageCode, language, t, uiLanguage } = useSettings();
   const theme = useTheme();
   const [loaded, setLoaded] = useState<{ lang: string; words: Word[] } | null>(null);
   // Words of the previously selected language are stale while the new ones load.
@@ -45,13 +45,13 @@ export default function WordsScreen() {
     for (const word of filtered) {
       byDay.set(word.dayKey, [...(byDay.get(word.dayKey) ?? []), word]);
     }
-    return [...byDay].map(([day, data]) => ({ title: formatDayHeader(day), data }));
-  }, [words, search]);
+    return [...byDay].map(([day, data]) => ({ title: formatDayHeader(day, t, uiLanguage), data }));
+  }, [words, search, t, uiLanguage]);
 
   function confirmDelete(word: Word) {
-    Alert.alert('Usunąć słówko?', word.word, [
-      { text: 'Anuluj', style: 'cancel' },
-      { text: 'Usuń', style: 'destructive', onPress: () => user && deleteWord(user.uid, word.id) },
+    Alert.alert(t.words.deleteTitle, word.word, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.common.delete, style: 'destructive', onPress: () => user && deleteWord(user.uid, word.id) },
     ]);
   }
 
@@ -59,9 +59,9 @@ export default function WordsScreen() {
     <ThemedView style={styles.container}>
       <Stack.Screen
         options={{
-          title: `${language.flag} Moje słówka`,
+          title: `${language.flag} ${t.titles.words}`,
           headerRight: () => (
-            <Pressable onPress={() => router.push('/settings')} hitSlop={8} accessibilityLabel="Ustawienia">
+            <Pressable onPress={() => router.push('/settings')} hitSlop={8} accessibilityLabel={t.words.settings}>
               <ThemedText style={styles.headerIcon}>⚙️</ThemedText>
             </Pressable>
           ),
@@ -71,7 +71,7 @@ export default function WordsScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Szukaj…"
+          placeholder={t.words.search}
           placeholderTextColor={theme.textSecondary}
           style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
@@ -83,7 +83,7 @@ export default function WordsScreen() {
           stickySectionHeadersEnabled={false}
           ListEmptyComponent={
             <ThemedText themeColor="textSecondary" style={styles.empty}>
-              {words === null ? 'Ładowanie…' : 'Brak słówek. Dodaj pierwsze!'}
+              {words === null ? t.common.loading : t.words.empty}
             </ThemedText>
           }
           renderSectionHeader={({ section }) => (
@@ -115,9 +115,9 @@ export default function WordsScreen() {
           )}
         />
         <View style={styles.actions}>
-          <Button title="+ Dodaj słówko" onPress={() => router.push('/add')} style={styles.action} />
+          <Button title={t.words.add} onPress={() => router.push('/add')} style={styles.action} />
           <Button
-            title="Quiz"
+            title={t.words.quiz}
             variant="secondary"
             disabled={!words?.length}
             onPress={() => router.push('/quiz/setup')}

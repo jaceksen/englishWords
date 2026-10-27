@@ -7,7 +7,8 @@ import { Field } from '@/components/field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { suggestWord } from '@/lib/ai';
+import type { UiLanguageCode } from '@/i18n';
+import { aiErrorMessage, suggestWord } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
 import { useSettings } from '@/lib/settings';
@@ -27,10 +28,13 @@ export default function AddWordScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { user } = useAuth();
   const settings = useSettings();
+  const { t } = settings;
   // A word being edited keeps its own language, even if the setting changed since.
   const [lang, setLang] = useState<LanguageCode>(settings.languageCode);
   const language = LANGUAGES[lang];
-  const speech = useSpeechInput();
+  // Translations are in the app language, except for an edited word that keeps its own until re-suggested.
+  const [nativeLang, setNativeLang] = useState<UiLanguageCode>(settings.uiLanguageCode);
+  const speech = useSpeechInput({ noPermission: t.errors.noMicPermission });
   const [target, setTarget] = useState<VoiceTarget | null>(null);
 
   const [word, setWord] = useState('');
@@ -48,6 +52,7 @@ export default function AddWordScreen() {
     getWord(user.uid, id).then((existing) => {
       if (!existing) return;
       setLang(existing.lang);
+      setNativeLang(existing.nativeLang);
       setWord(existing.word);
       setContext(existing.context);
       setTranslations(existing.translations.join(', '));
@@ -74,15 +79,21 @@ export default function AddWordScreen() {
     setSuggesting(true);
     setError(null);
     try {
-      const s = await suggestWord(lang, word.trim(), context.trim());
+      const s = await suggestWord({
+        lang,
+        nativeLang: settings.uiLanguageCode,
+        word: word.trim(),
+        context: context.trim(),
+      });
       setWord(s.word);
       setContext(s.context);
       setTranslations(s.translations.join(', '));
       setPartOfSpeech(s.partOfSpeech);
       setDefinition(s.definition);
-      return s;
+      setNativeLang(settings.uiLanguageCode);
+      return { ...s, nativeLang: settings.uiLanguageCode };
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(aiErrorMessage(e, t));
       return null;
     } finally {
       setSuggesting(false);
@@ -96,6 +107,7 @@ export default function AddWordScreen() {
     try {
       let input: WordInput = {
         word: word.trim(),
+        nativeLang,
         context: context.trim(),
         translations: splitTranslations(translations),
         partOfSpeech,
@@ -117,35 +129,35 @@ export default function AddWordScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: `${language.flag} ${id ? 'Edytuj słówko' : 'Dodaj słówko'}` }} />
+      <Stack.Screen options={{ title: `${language.flag} ${id ? t.titles.editWord : t.titles.addWord}` }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Field
-            label={`Słówko (${language.name.toLowerCase()})`}
+            label={t.add.word(t.languageNames[lang])}
             value={target === 'word' && speech.listening ? speech.partial : word}
             onChangeText={setWord}
             autoCapitalize="none"
-            placeholder={language.wordPlaceholder}
+            placeholder={t.common.example(language.wordExample)}
             onMicPress={() => dictate('word')}
             listening={target === 'word' && speech.listening}
           />
           <Field
-            label={`Zdanie z kontekstem (${language.name.toLowerCase()})`}
+            label={t.add.context(t.languageNames[lang])}
             value={target === 'context' && speech.listening ? speech.partial : context}
             onChangeText={setContext}
             multiline
-            placeholder={language.contextPlaceholder}
+            placeholder={t.common.example(language.contextExample)}
             onMicPress={() => dictate('context')}
             listening={target === 'context' && speech.listening}
           />
           <Field
-            label="Tłumaczenie (PL, oddziel przecinkami)"
+            label={t.add.translations(t.languageNames[nativeLang])}
             value={translations}
             onChangeText={setTranslations}
-            placeholder="np. niechętny, oporny"
+            placeholder={t.add.translationsPlaceholder}
           />
           <Button
-            title="✨ Podpowiedz tłumaczenie"
+            title={t.add.suggest}
             variant="secondary"
             onPress={suggest}
             loading={suggesting}
@@ -166,7 +178,7 @@ export default function AddWordScreen() {
               {error ?? speech.error}
             </ThemedText>
           )}
-          <Button title="Zapisz" onPress={save} loading={saving} disabled={!word.trim() || suggesting} />
+          <Button title={t.common.save} onPress={save} loading={saving} disabled={!word.trim() || suggesting} />
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>

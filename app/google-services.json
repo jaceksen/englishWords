@@ -57,6 +57,59 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954435657764:android:24ff8f227cfb0b7158f8b1",
+        "android_client_info": {
+          "package_name": "com.vocabsprint"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "954435657764-3q8jentlfcvqfo60bjtkh0i4cu368ou0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vocabsprint",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "954435657764-721hcenrd9c76o4naqjb92rd369jett5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vocabsprint",
+            "certificate_hash": "1146331a80bca7f7168f8835e18801667f4523dc"
+          }
+        },
+        {
+          "client_id": "954435657764-ksckfogn106ghclasg3gju7618230acg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vocabsprint",
+            "certificate_hash": "0f073f38f18358eaa0a5de92fcab3e976174cfb9"
+          }
+        },
+        {
+          "client_id": "954435657764-aiufv0dd7u2b9dbhjgu9u3peckaph5p7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAr-WQut8_15pzaLS3KRmYv8rcqidsVbfU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "954435657764-aiufv0dd7u2b9dbhjgu9u3peckaph5p7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

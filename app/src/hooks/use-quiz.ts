@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import type { Grade } from '@/lib/ai';
+import { aiErrorMessage, type Grade } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
+import { useSettings } from '@/lib/settings';
 import { getSession, grade, hasNextRound, startNextRound } from '@/lib/quiz';
 import { recordAnswer } from '@/lib/words';
 
@@ -12,6 +13,7 @@ export type RoundBreak = { round: number; rounds: number; correct: number; total
 /** Drives a quiz session started from the setup screen: grading, progress, rounds and saving results. */
 export function useQuiz() {
   const { user } = useAuth();
+  const { uiLanguageCode, t } = useSettings();
   const [session] = useState(getSession);
   const [round, setRound] = useState(1);
   const [index, setIndex] = useState(0);
@@ -28,13 +30,14 @@ export function useQuiz() {
     setGrading(true);
     setError(null);
     try {
-      const g = await grade(question, answer);
+      // Feedback follows the current app language; questions keep the language the quiz started in.
+      const g = await grade(question, answer, uiLanguageCode);
       session.results.push({ question, answer, grade: g });
       setResult(g);
       if (user) recordAnswer(user.uid, question.word, g.correct).catch(() => {});
       return g;
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(aiErrorMessage(e, t));
       return null;
     } finally {
       setGrading(false);

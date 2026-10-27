@@ -1,11 +1,8 @@
+import type { Translations, UiLanguage } from '@/i18n';
+
 export type RangeKey = 'today' | 'week' | 'last7' | 'all';
 
-export const RANGE_LABELS: Record<RangeKey, string> = {
-  today: 'Dzisiaj',
-  week: 'Ten tydzień',
-  last7: 'Ostatnie 7 dni',
-  all: 'Wszystkie',
-};
+export const RANGE_KEYS: RangeKey[] = ['today', 'week', 'last7', 'all'];
 
 /** Local-time day key, e.g. "2026-10-27". */
 export function dayKey(date = new Date()) {
@@ -36,11 +33,11 @@ export function rangeStart(range: RangeKey, now = new Date()): Date | null {
   }
 }
 
-export function formatDayHeader(key: string) {
+export function formatDayHeader(key: string, t: Translations, uiLanguage: UiLanguage) {
   const today = dayKey();
   const yesterday = dayKey(new Date(Date.now() - 24 * 60 * 60 * 1000));
-  if (key === today) return 'Dzisiaj';
-  if (key === yesterday) return 'Wczoraj';
+  if (key === today) return t.words.today;
+  if (key === yesterday) return t.words.yesterday;
   const [y, m, d] = key.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+  return new Date(y, m - 1, d).toLocaleDateString(uiLanguage.locale, { weekday: 'long', day: 'numeric', month: 'long' });
 }

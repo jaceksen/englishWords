@@ -1,18 +1,20 @@
+import { getTranslations, UI_LANGUAGES, type Translations, type UiLanguageCode } from '@/i18n';
 import { checkAnswer, type Direction, type Grade } from '@/lib/ai';
-import { LANGUAGES, NATIVE_SPEECH, type Language } from '@/lib/languages';
+import { LANGUAGES, withoutArticle, type Language } from '@/lib/languages';
 import type { SpeechLang } from '@/lib/speech';
 import type { Word } from '@/lib/words';
 
 export type DirectionChoice = Direction | 'mix';
 export type QuizMode = 'text' | 'voice';
 
-export function directionLabel(direction: DirectionChoice, language: Language) {
+export function directionLabel(direction: DirectionChoice, language: Language, uiLang: UiLanguageCode, t: Translations) {
   const code = language.code.toUpperCase();
+  const native = uiLang.toUpperCase();
   return {
-    translate: `${code} → PL`,
-    recall: `PL → ${code}`,
-    cloze: 'Zdanie z luką',
-    mix: 'Mieszane',
+    translate: `${code} → ${native}`,
+    recall: `${native} → ${code}`,
+    cloze: t.quiz.cloze,
+    mix: t.quiz.mix,
   }[direction];
 }
 
@@ -31,6 +33,8 @@ export type QuizResult = { question: Question; answer: string; grade: Grade };
 
 export type QuizSession = {
   mode: QuizMode;
+  /** App language when the quiz started: questions are asked and read out in it. */
+  uiLang: UiLanguageCode;
   direction: DirectionChoice;
   /** Questions per round. */
   count: number;
@@ -53,9 +57,13 @@ function escapeRegExp(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Replaces the word (and its inflected ending) in the context sentence. Unicode-aware, so it works for Cyrillic. */
+/**
+ * Replaces the word (without its article, plus any inflected ending) in the context sentence.
+ * Unicode-aware, so it works for Cyrillic and accented letters.
+ */
 function clozeSentence(word: Word) {
-  const pattern = new RegExp(`(?<!\\p{L})${escapeRegExp(word.word)}\\p{L}*`, 'iu');
+  const base = withoutArticle(word.word, word.lang);
+  const pattern = new RegExp(`(?<!\\p{L})${escapeRegExp(base)}\\p{L}*`, 'iu');
   return pattern.test(word.context) ? word.context.replace(pattern, BLANK) : null;
 }
 
@@ -68,8 +76,12 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
-function makeQuestion(word: Word, direction: Direction): Question {
+function makeQuestion(word: Word, direction: Direction, uiLang: UiLanguageCode): Question {
   const language = LANGUAGES[word.lang];
+  const t = getTranslations(uiLang);
+  const uiSpeech = UI_LANGUAGES[uiLang].speech;
+  // Translations may be in another language than the current UI (words saved before it was changed).
+  const translationSpeech = UI_LANGUAGES[word.nativeLang].speech;
   const translations = word.translations.join(', ');
   if (direction === 'cloze') {
     const sentence = clozeSentence(word);
@@ -80,14 +92,14 @@ function makeQuestion(word: Word, direction: Direction): Question {
         direction,
         prompt: sentence,
         spoken: [
-          { text: 'Uzupełnij zdanie.', lang: NATIVE_SPEECH },
+          { text: t.spoken.fillSentence, lang: uiSpeech },
           // Reading the sentence in parts leaves a pause where the blank is.
           ...sentence
             .split(BLANK)
             .map((part) => part.trim())
             .filter(Boolean)
             .map((part) => ({ text: part, lang: language.speech })),
-          ...(translations ? [{ text: `Podpowiedź: ${translations}`, lang: NATIVE_SPEECH }] : []),
+          ...(translations ? [{ text: t.spoken.hint(translations), lang: translationSpeech }] : []),
         ],
         answerLang: language.speech,
         expected: word.word,
@@ -100,7 +112,7 @@ function makeQuestion(word: Word, direction: Direction): Question {
       word,
       direction,
       prompt: translations,
-      spoken: [{ text: `Jak ${language.adverb}: ${translations}?`, lang: NATIVE_SPEECH }],
+      spoken: [{ text: t.spoken.howToSay(t.inLanguage[word.lang], translations), lang: uiSpeech }],
       answerLang: language.speech,
       expected: word.word,
     };
@@ -110,18 +122,18 @@ function makeQuestion(word: Word, direction: Direction): Question {
     direction: 'translate',
     prompt: word.word,
     spoken: [
-      { text: 'Co znaczy', lang: NATIVE_SPEECH },
+      { text: t.spoken.whatMeans, lang: uiSpeech },
       { text: word.word, lang: language.speech },
     ],
-    answerLang: NATIVE_SPEECH,
-    expected: translations || '(brak tłumaczenia)',
+    answerLang: translationSpeech,
+    expected: translations || t.quiz.noTranslation,
   };
 }
 
-function toQuestions(words: Word[], direction: DirectionChoice) {
+function toQuestions(words: Word[], direction: DirectionChoice, uiLang: UiLanguageCode) {
   const directions: Direction[] = ['translate', 'recall', 'cloze'];
   return words.map((word) =>
-    makeQuestion(word, direction === 'mix' ? directions[Math.floor(Math.random() * 3)] : direction),
+    makeQuestion(word, direction === 'mix' ? directions[Math.floor(Math.random() * 3)] : direction, uiLang),
   );
 }
 
@@ -134,6 +146,7 @@ function pickWords(words: Word[], count: number) {
 
 export function createSession(options: {
   mode: QuizMode;
+  uiLang: UiLanguageCode;
   direction: DirectionChoice;
   count: number;
   rounds: number;
@@ -142,7 +155,7 @@ export function createSession(options: {
   return {
     ...options,
     round: 1,
-    questions: toQuestions(pickWords(options.pool, options.count), options.direction),
+    questions: toQuestions(pickWords(options.pool, options.count), options.direction, options.uiLang),
     results: [],
     completedRounds: [],
   };
@@ -173,7 +186,7 @@ export function startNextRound(session: QuizSession) {
   session.completedRounds.push(session.results);
   session.results = [];
   session.round += 1;
-  session.questions = toQuestions(words, session.direction);
+  session.questions = toQuestions(words, session.direction, session.uiLang);
 }
 
 /** Every round played so far, including an unfinished current one. */
@@ -181,7 +194,7 @@ export function allRounds(session: QuizSession) {
   return [...session.completedRounds, session.results].filter((round) => round.length > 0);
 }
 
-/** `lang` is the language of the answer; null for Polish. */
+/** `lang` is the language of the answer when it is a learned language; null for a native-language answer. */
 function normalize(text: string, lang: Word['lang'] | null) {
   let result = text
     .toLowerCase()
@@ -196,15 +209,23 @@ function normalize(text: string, lang: Word['lang'] | null) {
 }
 
 /** Exact matches are graded locally; anything else goes to the model for a lenient check. */
-export async function grade(question: Question, answer: string): Promise<Grade> {
+export async function grade(question: Question, answer: string, uiLang: UiLanguageCode): Promise<Grade> {
   const { word } = question;
-  const expected = question.direction === 'translate' ? word.translations : [word.word];
+  const expected =
+    question.direction === 'translate'
+      ? word.translations
+      : question.direction === 'cloze'
+        ? // The gap holds the bare word, so "Heft" is as good as "das Heft".
+          [word.word, withoutArticle(word.word, word.lang)]
+        : [word.word];
   const answerLang = question.direction === 'translate' ? null : word.lang;
   if (answer && expected.some((e) => normalize(e, answerLang) === normalize(answer, answerLang))) {
-    return { correct: true, score: 1, feedback: 'Dobrze!' };
+    return { correct: true, score: 1, feedback: getTranslations(uiLang).quiz.exactMatch };
   }
   return checkAnswer({
     lang: word.lang,
+    nativeLang: word.nativeLang,
+    uiLang,
     direction: question.direction,
     word: word.word,
     translations: word.translations,

@@ -6,6 +6,7 @@ import { Spacing } from '@/constants/theme';
 import type { Grade } from '@/lib/ai';
 import { LANGUAGES } from '@/lib/languages';
 import { directionLabel, type Question } from '@/lib/quiz';
+import { useSettings } from '@/lib/settings';
 
 type QuestionCardProps = {
   question: Question;
@@ -17,17 +18,18 @@ type QuestionCardProps = {
 };
 
 export function QuestionCard({ question, index, total, round = 1, rounds = 1, result }: QuestionCardProps) {
+  const { t, uiLanguageCode } = useSettings();
   const language = LANGUAGES[question.word.lang];
   const instruction = {
-    translate: 'Podaj polskie znaczenie',
-    recall: `Podaj słówko ${language.adverb}`,
-    cloze: 'Uzupełnij lukę',
+    translate: t.quiz.instructionTranslate,
+    recall: t.quiz.instructionRecall(t.inLanguage[question.word.lang]),
+    cloze: t.quiz.instructionCloze,
   }[question.direction];
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedText type="small" themeColor="textSecondary">
-        {rounds > 1 && `Runda ${round}/${rounds} · `}
-        {index + 1} / {total} · {directionLabel(question.direction, language)}
+        {rounds > 1 && `${t.quiz.round(round, rounds)} · `}
+        {index + 1} / {total} · {directionLabel(question.direction, language, uiLanguageCode, t)}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {instruction}
@@ -35,17 +37,17 @@ export function QuestionCard({ question, index, total, round = 1, rounds = 1, re
       <ThemedText style={question.direction === 'cloze' ? styles.sentence : styles.prompt}>{question.prompt}</ThemedText>
       {question.direction === 'cloze' && question.word.translations.length > 0 && (
         <ThemedText type="small" themeColor="textSecondary">
-          Podpowiedź: {question.word.translations.join(', ')}
+          {t.quiz.hint(question.word.translations.join(', '))}
         </ThemedText>
       )}
       {result && (
         <ThemedView type="background" style={styles.result}>
           <ThemedText type="smallBold" themeColor={result.correct ? 'success' : 'danger'}>
-            {result.correct ? '✓ Dobrze' : '✗ Źle'}
+            {result.correct ? t.quiz.correct : t.quiz.wrong}
           </ThemedText>
           <ThemedText type="small">{result.feedback}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Odpowiedź: {question.expected}
+            {t.quiz.answer(question.expected)}
           </ThemedText>
           {!!question.word.context && question.direction !== 'cloze' && (
             <ThemedText type="small" themeColor="textSecondary">

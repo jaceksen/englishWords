@@ -4,12 +4,13 @@ import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { SettingsProvider } from '@/lib/settings';
+import { SettingsProvider, useT } from '@/lib/settings';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
   const { user, initializing } = useAuth();
+  const t = useT();
 
   useEffect(() => {
     if (!initializing) SplashScreen.hideAsync();
@@ -20,16 +21,18 @@ function RootNavigator() {
   return (
     <Stack>
       <Stack.Protected guard={!!user}>
-        <Stack.Screen name="index" options={{ title: 'Moje słówka' }} />
-        <Stack.Screen name="add" options={{ title: 'Dodaj słówko', presentation: 'modal' }} />
-        <Stack.Screen name="quiz/setup" options={{ title: 'Quiz' }} />
-        <Stack.Screen name="quiz/text" options={{ title: 'Quiz pisemny' }} />
-        <Stack.Screen name="quiz/voice" options={{ title: 'Quiz głosowy' }} />
-        <Stack.Screen name="quiz/summary" options={{ title: 'Podsumowanie', headerBackVisible: false }} />
-        <Stack.Screen name="settings" options={{ title: 'Ustawienia' }} />
+        <Stack.Screen name="index" options={{ title: t.titles.words }} />
+        <Stack.Screen name="add" options={{ title: t.titles.addWord, presentation: 'modal' }} />
+        <Stack.Screen name="quiz/setup" options={{ title: t.titles.quiz }} />
+        <Stack.Screen name="quiz/text" options={{ title: t.titles.textQuiz }} />
+        <Stack.Screen name="quiz/voice" options={{ title: t.titles.voiceQuiz }} />
+        <Stack.Screen name="quiz/summary" options={{ title: t.titles.summary, headerBackVisible: false }} />
+        <Stack.Screen name="settings" options={{ title: t.titles.settings }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ title: t.titles.register }} />
+        <Stack.Screen name="forgot-password" options={{ title: t.titles.forgotPassword }} />
       </Stack.Protected>
     </Stack>
   );

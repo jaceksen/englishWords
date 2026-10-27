@@ -10,7 +10,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useQuiz } from '@/hooks/use-quiz';
-import { LANGUAGES, NATIVE_SPEECH } from '@/lib/languages';
+import { UI_LANGUAGES } from '@/i18n';
+import { LANGUAGES } from '@/lib/languages';
+import { useSettings } from '@/lib/settings';
 import { speak, stopSpeaking, useSpeechInput } from '@/lib/speech';
 
 const PAUSE_AFTER_RESULT_MS = 1200;
@@ -19,7 +21,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function VoiceQuizScreen() {
   const quiz = useQuiz();
-  const speech = useSpeechInput();
+  const { t, uiLanguage } = useSettings();
+  const speech = useSpeechInput({ noPermission: t.errors.noMicPermission });
   const [paused, setPaused] = useState(false);
   const [status, setStatus] = useState('');
   const [heard, setHeard] = useState('');
@@ -36,7 +39,7 @@ export default function VoiceQuizScreen() {
       // Between rounds: announce the score, then carry on without a tap.
       if (roundBreak) {
         setStatus('');
-        await speak(roundBreakMessage(roundBreak), NATIVE_SPEECH);
+        await speak(roundBreakMessage(roundBreak, t), uiLanguage.speech);
         if (!cancelled()) quiz.continueToNextRound();
         return;
       }
@@ -47,7 +50,7 @@ export default function VoiceQuizScreen() {
         return;
       }
       setHeard('');
-      setStatus('Czytam pytanie…');
+      setStatus(t.voice.reading);
       for (const part of question.spoken) {
         await speak(part.text, part.lang);
         if (cancelled()) return;
@@ -56,25 +59,27 @@ export default function VoiceQuizScreen() {
       let answer = '';
       for (let attempt = 0; attempt < 2 && !answer; attempt++) {
         if (attempt > 0) {
-          await speak('Nie usłyszałem. Powtórz, proszę.', NATIVE_SPEECH);
+          await speak(t.spoken.didntHear, uiLanguage.speech);
           if (cancelled()) return;
         }
-        setStatus('Słucham…');
+        setStatus(t.voice.listening);
         answer = await speech.listen(question.answerLang);
         if (cancelled()) return;
       }
       setHeard(answer);
 
-      setStatus('Sprawdzam…');
+      setStatus(t.voice.checking);
       const result = await quiz.submit(answer);
       if (cancelled() || !result) return;
 
       setStatus('');
-      await speak(result.correct ? 'Dobrze!' : 'Niestety nie.', NATIVE_SPEECH);
+      await speak(result.correct ? t.spoken.correct : t.spoken.wrong, uiLanguage.speech);
       if (!result.correct) {
         await speak(
           question.expected,
-          question.direction === 'translate' ? NATIVE_SPEECH : LANGUAGES[question.word.lang].speech,
+          question.direction === 'translate'
+            ? UI_LANGUAGES[question.word.nativeLang].speech
+            : LANGUAGES[question.word.lang].speech,
         );
       }
       await sleep(PAUSE_AFTER_RESULT_MS);
@@ -95,8 +100,8 @@ export default function VoiceQuizScreen() {
     return (
       <ThemedView style={[styles.container, styles.content]}>
         <RoundBreakCard roundBreak={quiz.roundBreak} />
-        <Button title={paused ? '▶ Wznów' : '⏸ Pauza'} variant="secondary" onPress={() => setPaused((p) => !p)} />
-        <Button title="Zakończ quiz" variant="danger" onPress={() => router.replace('/quiz/summary')} />
+        <Button title={paused ? t.voice.resume : t.voice.pause} variant="secondary" onPress={() => setPaused((p) => !p)} />
+        <Button title={t.voice.end} variant="danger" onPress={() => router.replace('/quiz/summary')} />
       </ThemedView>
     );
   }
@@ -104,8 +109,8 @@ export default function VoiceQuizScreen() {
   if (!quiz.question) {
     return (
       <ThemedView style={[styles.container, styles.content]}>
-        <ThemedText>Brak aktywnego quizu.</ThemedText>
-        <Button title="Wróć" onPress={() => router.replace('/')} />
+        <ThemedText>{t.quiz.noQuiz}</ThemedText>
+        <Button title={t.common.back} onPress={() => router.replace('/')} />
       </ThemedView>
     );
   }
@@ -123,7 +128,7 @@ export default function VoiceQuizScreen() {
         />
         <ThemedView style={styles.listening}>
           <MicButton listening={speech.listening} onPress={() => speech.stop()} size={88} disabled={!speech.listening} />
-          <ThemedText themeColor="textSecondary">{paused ? 'Wstrzymano' : status}</ThemedText>
+          <ThemedText themeColor="textSecondary">{paused ? t.voice.paused : status}</ThemedText>
           {!!(speech.listening ? speech.partial : heard) && (
             <ThemedText type="subtitle" style={styles.heard}>
               {speech.listening ? speech.partial : heard}
@@ -131,13 +136,13 @@ export default function VoiceQuizScreen() {
           )}
         </ThemedView>
         {(quiz.error || speech.error) && <ThemedText themeColor="danger">{quiz.error ?? speech.error}</ThemedText>}
-        {quiz.error && <Button title="Pomiń pytanie" variant="secondary" onPress={quiz.next} />}
+        {quiz.error && <Button title={t.voice.skip} variant="secondary" onPress={quiz.next} />}
         <Button
-          title={paused ? '▶ Wznów' : '⏸ Pauza'}
+          title={paused ? t.voice.resume : t.voice.pause}
           variant="secondary"
           onPress={() => setPaused((p) => !p)}
         />
-        <Button title="Zakończ quiz" variant="danger" onPress={() => router.replace('/quiz/summary')} />
+        <Button title={t.voice.end} variant="danger" onPress={() => router.replace('/quiz/summary')} />
       </ScrollView>
     </ThemedView>
   );

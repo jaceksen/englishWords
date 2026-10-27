@@ -1,5 +1,6 @@
 import { httpsCallable } from '@react-native-firebase/functions';
 
+import type { Translations, UiLanguageCode } from '@/i18n';
 import { functions } from '@/lib/firebase';
 import type { LanguageCode } from '@/lib/languages';
 
@@ -12,13 +13,25 @@ export type Suggestion = {
   definition: string;
 };
 
-/** translate: foreign word → Polish; recall: Polish → foreign word; cloze: fill the gap in the sentence. */
+/** translate: foreign word → native; recall: native → foreign word; cloze: fill the gap in the sentence. */
 export type Direction = 'translate' | 'recall' | 'cloze';
 
 export type Grade = { correct: boolean; score: number; feedback: string };
 
+type SuggestWordRequest = {
+  lang: LanguageCode;
+  /** Language to translate into (the learner's native language). */
+  nativeLang: UiLanguageCode;
+  word: string;
+  context: string;
+};
+
 type CheckAnswerRequest = {
   lang: LanguageCode;
+  /** Language of the word's stored translations. */
+  nativeLang: UiLanguageCode;
+  /** Language for the feedback. */
+  uiLang: UiLanguageCode;
   direction: Direction;
   word: string;
   translations: string[];
@@ -26,16 +39,19 @@ type CheckAnswerRequest = {
   userAnswer: string;
 };
 
-const suggestWordFn = httpsCallable<{ lang: LanguageCode; word: string; context: string }, Suggestion>(
-  functions,
-  'suggestWord',
-);
+const suggestWordFn = httpsCallable<SuggestWordRequest, Suggestion>(functions, 'suggestWord');
 const checkAnswerFn = httpsCallable<CheckAnswerRequest, Grade>(functions, 'checkAnswer');
 
-export async function suggestWord(lang: LanguageCode, word: string, context: string) {
-  return (await suggestWordFn({ lang, word, context })).data;
+export async function suggestWord(request: SuggestWordRequest) {
+  return (await suggestWordFn(request)).data;
 }
 
 export async function checkAnswer(request: CheckAnswerRequest) {
   return (await checkAnswerFn(request)).data;
+}
+
+/** Message in the app language for a failed AI call. */
+export function aiErrorMessage(error: unknown, t: Translations) {
+  const code = String((error as { code?: string } | null)?.code ?? '').replace(/^functions\//, '');
+  return code === 'resource-exhausted' ? t.errors.aiBusy : t.errors.aiUnavailable;
 }

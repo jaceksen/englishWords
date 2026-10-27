@@ -10,11 +10,13 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useQuiz } from '@/hooks/use-quiz';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/settings';
 
 const ROUND_BREAK_MS = 2500;
 
 export default function TextQuizScreen() {
   const theme = useTheme();
+  const t = useT();
   const quiz = useQuiz();
   const [answer, setAnswer] = useState('');
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -32,7 +34,7 @@ export default function TextQuizScreen() {
     return (
       <ThemedView style={[styles.container, styles.content]}>
         <RoundBreakCard roundBreak={roundBreak} />
-        <Button title="Dalej" onPress={continueToNextRound} />
+        <Button title={t.common.next} onPress={continueToNextRound} />
       </ThemedView>
     );
   }
@@ -40,8 +42,8 @@ export default function TextQuizScreen() {
   if (!quiz.question) {
     return (
       <ThemedView style={[styles.container, styles.content]}>
-        <ThemedText>Brak aktywnego quizu.</ThemedText>
-        <Button title="Wróć" onPress={() => router.replace('/')} />
+        <ThemedText>{t.quiz.noQuiz}</ThemedText>
+        <Button title={t.common.back} onPress={() => router.replace('/')} />
       </ThemedView>
     );
   }
@@ -72,7 +74,7 @@ export default function TextQuizScreen() {
             autoFocus
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder="Twoja odpowiedź"
+            placeholder={t.quiz.yourAnswer}
             placeholderTextColor={theme.textSecondary}
             returnKeyType="done"
             onSubmitEditing={() => (quiz.result ? handleNext() : quiz.submit(answer))}
@@ -81,11 +83,11 @@ export default function TextQuizScreen() {
           {quiz.error && <ThemedText themeColor="danger">{quiz.error}</ThemedText>}
           {quiz.result ? (
             <Button
-              title={quiz.index + 1 < quiz.total || quiz.round < quiz.rounds ? 'Dalej' : 'Zakończ'}
+              title={quiz.index + 1 < quiz.total || quiz.round < quiz.rounds ? t.common.next : t.common.finish}
               onPress={handleNext}
             />
           ) : (
-            <Button title="Sprawdź" onPress={() => quiz.submit(answer)} loading={quiz.grading} />
+            <Button title={t.quiz.check} onPress={() => quiz.submit(answer)} loading={quiz.grading} />
           )}
         </ScrollView>
       </KeyboardAvoidingView>

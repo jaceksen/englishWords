@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
-import { RANGE_LABELS, type RangeKey } from '@/lib/dates';
+import { RANGE_KEYS, type RangeKey } from '@/lib/dates';
 import {
   createSession,
   directionLabel,
@@ -24,7 +24,7 @@ const COUNTS = [5, 10, 20, 0] as const; // 0 = all
 
 export default function QuizSetupScreen() {
   const { user } = useAuth();
-  const { languageCode, language } = useSettings();
+  const { languageCode, language, uiLanguageCode, t } = useSettings();
   const [range, setRange] = useState<RangeKey>('today');
   const [direction, setDirection] = useState<DirectionChoice>('translate');
   const [mode, setMode] = useState<QuizMode>('text');
@@ -45,7 +45,9 @@ export default function QuizSetupScreen() {
 
   function start() {
     if (!words?.length) return;
-    startSession(createSession({ mode, direction, count: count || words.length, rounds, pool: words }));
+    startSession(
+      createSession({ mode, uiLang: uiLanguageCode, direction, count: count || words.length, rounds, pool: words }),
+    );
     router.replace(mode === 'text' ? '/quiz/text' : '/quiz/voice');
   }
 
@@ -53,51 +55,51 @@ export default function QuizSetupScreen() {
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Chips
-          label="Które słówka"
+          label={t.setup.range}
           value={range}
           onChange={setRange}
-          options={(Object.keys(RANGE_LABELS) as RangeKey[]).map((value) => ({ value, label: RANGE_LABELS[value] }))}
+          options={RANGE_KEYS.map((value) => ({ value, label: t.ranges[value] }))}
         />
         <Chips
-          label="Rodzaj pytań"
+          label={t.setup.direction}
           value={direction}
           onChange={setDirection}
           options={(['translate', 'recall', 'cloze', 'mix'] as DirectionChoice[]).map((value) => ({
             value,
-            label: directionLabel(value, language),
+            label: directionLabel(value, language, uiLanguageCode, t),
           }))}
         />
         <Chips
-          label="Tryb"
+          label={t.setup.mode}
           value={mode}
           onChange={setMode}
           options={[
-            { value: 'text', label: '⌨️ Pisemny' },
-            { value: 'voice', label: '🎤 Głosowy' },
+            { value: 'text', label: t.setup.modeText },
+            { value: 'voice', label: t.setup.modeVoice },
           ]}
         />
         <Chips
-          label="Liczba pytań"
+          label={t.setup.count}
           value={count}
           onChange={setCount}
-          options={COUNTS.map((value) => ({ value, label: value ? String(value) : 'Wszystkie' }))}
+          options={COUNTS.map((value) => ({ value, label: value ? String(value) : t.setup.countAll }))}
         />
         <Chips
-          label="Liczba powtórzeń"
+          label={t.setup.rounds}
           value={rounds}
           onChange={setRounds}
-          options={ROUND_OPTIONS.map((value) => ({ value, label: value === 1 ? 'Bez powtórzeń' : `${value}×` }))}
+          options={ROUND_OPTIONS.map((value) => ({ value, label: value === 1 ? t.setup.noRepeat : `${value}×` }))}
         />
         {rounds > 1 && (
           <ThemedText type="small" themeColor="textSecondary">
-            Każda kolejna runda zawiera błędne słówka z poprzedniej, uzupełnione nowymi z wybranego zakresu.
+            {t.setup.roundsHint}
           </ThemedText>
         )}
         <ThemedText themeColor="textSecondary">
-          {words === null ? 'Ładowanie…' : `${language.flag} Słówek w wybranym zakresie: ${words.length}`}
+          {words === null ? t.common.loading : `${language.flag} ${t.setup.wordsInRange(words.length)}`}
         </ThemedText>
         {error && <ThemedText themeColor="danger">{error}</ThemedText>}
-        <Button title="Start" onPress={start} disabled={!words?.length} />
+        <Button title={t.setup.start} onPress={start} disabled={!words?.length} />
       </ScrollView>
     </ThemedView>
   );

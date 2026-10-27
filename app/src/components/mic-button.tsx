@@ -2,6 +2,7 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/settings';
 
 type MicButtonProps = {
   listening: boolean;
@@ -12,10 +13,11 @@ type MicButtonProps = {
 
 export function MicButton({ listening, onPress, size = 48, disabled }: MicButtonProps) {
   const theme = useTheme();
+  const t = useT();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={listening ? 'Zatrzymaj nagrywanie' : 'Mów'}
+      accessibilityLabel={listening ? t.voice.micStop : t.voice.micStart}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [

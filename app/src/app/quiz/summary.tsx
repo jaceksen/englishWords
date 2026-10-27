@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { allRounds, createSession, getSession, startSession, type QuizResult } from '@/lib/quiz';
+import { useSettings } from '@/lib/settings';
 import type { Word } from '@/lib/words';
 
 type Difficult = { word: Word; misses: number; last: QuizResult };
@@ -26,6 +27,7 @@ function difficultWords(rounds: QuizResult[][]) {
 }
 
 export default function SummaryScreen() {
+  const { t, uiLanguageCode } = useSettings();
   const session = getSession();
   const rounds = session ? allRounds(session) : [];
   const results = rounds.flat();
@@ -35,7 +37,16 @@ export default function SummaryScreen() {
   function retryDifficult() {
     if (!session) return;
     const pool = difficult.map((d) => d.word);
-    startSession(createSession({ mode: session.mode, direction: session.direction, count: pool.length, rounds: 1, pool }));
+    startSession(
+      createSession({
+        mode: session.mode,
+        uiLang: uiLanguageCode,
+        direction: session.direction,
+        count: pool.length,
+        rounds: 1,
+        pool,
+      }),
+    );
     router.replace(session.mode === 'text' ? '/quiz/text' : '/quiz/voice');
   }
 
@@ -47,17 +58,17 @@ export default function SummaryScreen() {
         </ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.center}>
           {results.length === 0
-            ? 'Brak odpowiedzi.'
+            ? t.summary.noAnswers
             : difficult.length === 0
-              ? 'Wszystko dobrze, świetna robota!'
-              : `Do powtórki: ${difficult.length}`}
+              ? t.summary.allCorrect
+              : t.summary.toReview(difficult.length)}
         </ThemedText>
 
         {rounds.length > 1 && (
           <ThemedView type="backgroundElement" style={styles.card}>
             {rounds.map((round, i) => (
               <View key={i} style={styles.row}>
-                <ThemedText type="small">Runda {i + 1}</ThemedText>
+                <ThemedText type="small">{t.summary.round(i + 1)}</ThemedText>
                 <ThemedText type="smallBold">
                   {round.filter((r) => r.grade.correct).length} / {round.length}
                 </ThemedText>
@@ -72,13 +83,13 @@ export default function SummaryScreen() {
               <ThemedText type="smallBold">{last.question.prompt}</ThemedText>
               {rounds.length > 1 && (
                 <ThemedText type="small" themeColor="textSecondary">
-                  błędów: {misses}
+                  {t.summary.misses(misses)}
                 </ThemedText>
               )}
             </View>
             <View style={styles.row}>
               <ThemedText type="small" themeColor="danger">
-                {last.answer || '(brak odpowiedzi)'}
+                {last.answer || t.summary.noAnswer}
               </ThemedText>
               <ThemedText type="small" themeColor="success">
                 {last.question.expected}
@@ -90,9 +101,9 @@ export default function SummaryScreen() {
           </ThemedView>
         ))}
 
-        {difficult.length > 0 && <Button title="Powtórz błędne" onPress={retryDifficult} />}
-        <Button title="Nowy quiz" variant="secondary" onPress={() => router.replace('/quiz/setup')} />
-        <Button title="Lista słówek" variant="secondary" onPress={() => router.dismissTo('/')} />
+        {difficult.length > 0 && <Button title={t.summary.retryWrong} onPress={retryDifficult} />}
+        <Button title={t.summary.newQuiz} variant="secondary" onPress={() => router.replace('/quiz/setup')} />
+        <Button title={t.summary.wordList} variant="secondary" onPress={() => router.dismissTo('/')} />
       </ScrollView>
     </ThemedView>
   );

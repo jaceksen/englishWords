@@ -2,9 +2,10 @@ import * as Speech from 'expo-speech';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useCallback, useRef, useState } from 'react';
 
-import type { Language, NATIVE_SPEECH } from '@/lib/languages';
+import type { UiLanguage } from '@/i18n';
+import type { Language } from '@/lib/languages';
 
-export type SpeechLang = typeof NATIVE_SPEECH | Language['speech'];
+export type SpeechLang = UiLanguage['speech'] | Language['speech'];
 
 /** Speaks `text` and resolves when finished (or stopped). */
 export function speak(text: string, language: SpeechLang, rate = 0.95) {
@@ -29,7 +30,7 @@ type Pending = { resolve: (text: string) => void; finals: string[]; latest: stri
  * One speech-recognition session at a time per screen. `listen()` resolves with the final transcript
  * ('' when nothing was heard), so callers can simply `await` the user's answer.
  */
-export function useSpeechInput() {
+export function useSpeechInput(messages: { noPermission: string }) {
   const [listening, setListening] = useState(false);
   const [partial, setPartial] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +71,7 @@ export function useSpeechInput() {
     setPartial('');
     const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
     if (!permission.granted) {
-      setError('Brak zgody na użycie mikrofonu.');
+      setError(messages.noPermission);
       return '';
     }
     pending.current?.resolve('');
@@ -85,7 +86,7 @@ export function useSpeechInput() {
         androidIntentOptions: { EXTRA_LANGUAGE_MODEL: short ? 'web_search' : 'free_form' },
       });
     });
-  }, []);
+  }, [messages.noPermission]);
 
   const stop = useCallback(() => ExpoSpeechRecognitionModule.stop(), []);
   const abort = useCallback(() => ExpoSpeechRecognitionModule.abort(), []);

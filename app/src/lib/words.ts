@@ -15,6 +15,7 @@ import {
   where,
 } from '@react-native-firebase/firestore';
 
+import { isUiLanguageCode, LEGACY_NATIVE_LANGUAGE, type UiLanguageCode } from '@/i18n';
 import { dayKey, rangeStart, type RangeKey } from '@/lib/dates';
 import { db } from '@/lib/firebase';
 import { DEFAULT_LANGUAGE, isLanguageCode, type LanguageCode } from '@/lib/languages';
@@ -26,6 +27,8 @@ export type Word = {
   id: string;
   word: string;
   lang: LanguageCode;
+  /** Language of `translations`: the app language when the word was saved. */
+  nativeLang: UiLanguageCode;
   translations: string[];
   context: string;
   partOfSpeech: string;
@@ -35,7 +38,7 @@ export type Word = {
   stats: { asked: number; correct: number; box: number; lastAskedAt: Date | null };
 };
 
-export type WordInput = Pick<Word, 'word' | 'translations' | 'context' | 'partOfSpeech' | 'definition'>;
+export type WordInput = Pick<Word, 'word' | 'nativeLang' | 'translations' | 'context' | 'partOfSpeech' | 'definition'>;
 
 function wordsCollection(uid: string) {
   return collection(db, 'users', uid, 'words');
@@ -48,6 +51,7 @@ function fromSnapshot(snap: { id: string; data: () => any }): Word {
     word: data.word,
     // Words saved before multi-language support have no lang and are English.
     lang: isLanguageCode(data.lang) ? data.lang : DEFAULT_LANGUAGE,
+    nativeLang: isUiLanguageCode(data.nativeLang) ? data.nativeLang : LEGACY_NATIVE_LANGUAGE,
     translations: data.translations ?? [],
     context: data.context ?? '',
     partOfSpeech: data.partOfSpeech ?? '',
