@@ -1,3 +1,5 @@
+import './options.js';
+
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { defineSecret, defineString } from 'firebase-functions/params';
@@ -18,6 +20,8 @@ const APP = 'vocabsprint';
 
 // Must match app/src/lib/plans.ts.
 type PlanCode = 'free' | 'pro_monthly' | 'pro_lifetime';
+// Currency options set on both Stripe prices; the app shows the price in the one it sends.
+const CURRENCIES = ['usd', 'pln', 'eur'];
 
 // Where Stripe sends the browser back. The page hands over to the app through its URL scheme.
 const RETURN_PAGE = 'https://europe-central2-legalizacjaonline.cloudfunctions.net/billingReturn';
@@ -72,6 +76,8 @@ export const createCheckoutSession = onCall({ secrets: [stripeSecretKey] }, asyn
     throw new HttpsError('invalid-argument', 'Unknown plan.');
   }
   const appUrl = requireReturnUrl(request.data?.returnUrl);
+  // Older app versions did not send a currency; they showed dollars.
+  const currency = CURRENCIES.includes(request.data?.currency) ? (request.data.currency as string) : 'usd';
   const current = (await db().doc(`users/${uid}`).get()).get('plan');
   if (current === 'pro_lifetime' || current === plan) {
     throw new HttpsError('already-exists', 'This plan is already active.');
@@ -81,6 +87,7 @@ export const createCheckoutSession = onCall({ secrets: [stripeSecretKey] }, asyn
   const monthly = plan === 'pro_monthly';
   const session = await getStripe().checkout.sessions.create({
     mode: monthly ? 'subscription' : 'payment',
+    currency,
     customer,
     client_reference_id: uid,
     line_items: [{ price: monthly ? monthlyPrice.value() : lifetimePrice.value(), quantity: 1 }],

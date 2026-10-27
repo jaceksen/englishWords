@@ -10,7 +10,7 @@ import { UI_LANGUAGES, type UiLanguageCode } from '@/i18n';
 import { useAuth } from '@/lib/auth';
 import { buyPlan, manageBilling } from '@/lib/billing';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
-import { PLANS, type PlanCode } from '@/lib/plans';
+import { deviceCurrency, formatPrice, PLANS, type PlanCode } from '@/lib/plans';
 import { useSettings } from '@/lib/settings';
 import { countWords } from '@/lib/words';
 
@@ -57,7 +57,9 @@ function OptionPicker<T extends string>({
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
-  const { t, languageCode, setLanguage, uiLanguageCode, setUiLanguage, planCode, plan } = useSettings();
+  const { t, languageCode, setLanguage, uiLanguage, uiLanguageCode, setUiLanguage, planCode, plan } = useSettings();
+  // The same currency is shown here and charged by Stripe.
+  const [currency] = useState(deviceCurrency);
   const [wordCount, setWordCount] = useState<number | null>(null);
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export default function SettingsScreen() {
     if (billingBusy || code === planCode || planCode === 'pro_lifetime') return;
     // Going back to free means cancelling the subscription, which Stripe's portal does.
     if (code === 'free') runBilling(manageBilling);
-    else runBilling(() => buyPlan(code));
+    else runBilling(() => buyPlan(code, currency));
   }
 
   const planOptions: Option<PlanCode>[] = [
@@ -95,13 +97,13 @@ export default function SettingsScreen() {
       value: 'pro_monthly',
       flag: PLANS.pro_monthly.icon,
       label: t.plans.proMonthly,
-      detail: t.plans.proMonthlyDetail(PLANS.pro_monthly.price),
+      detail: t.plans.proMonthlyDetail(formatPrice('pro_monthly', currency, uiLanguage.locale)),
     },
     {
       value: 'pro_lifetime',
       flag: PLANS.pro_lifetime.icon,
       label: t.plans.proLifetime,
-      detail: t.plans.proLifetimeDetail(PLANS.pro_lifetime.price),
+      detail: t.plans.proLifetimeDetail(formatPrice('pro_lifetime', currency, uiLanguage.locale)),
     },
   ];
 

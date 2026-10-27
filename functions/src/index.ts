@@ -1,13 +1,12 @@
+import './options.js';
+
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/v2/https';
-import { setGlobalOptions } from 'firebase-functions/v2';
 import { z } from 'zod';
 
 const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
-
-setGlobalOptions({ region: 'europe-central2', maxInstances: 5 });
 
 const MODEL = 'claude-haiku-5-5';
 
