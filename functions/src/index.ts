@@ -11,6 +11,18 @@ setGlobalOptions({ region: 'europe-central2', maxInstances: 5 });
 
 const MODEL = 'claude-haiku-5-5';
 
+// Must match app/src/lib/languages.ts. `notes` are language-specific hints for the model.
+const LANGUAGES = {
+  en: { name: 'English', notes: '' },
+  ru: {
+    name: 'Russian',
+    notes:
+      'Always write Russian in Cyrillic; if the learner typed it in Latin transliteration, convert it. ' +
+      'Treat "е" and "ё" as equivalent. Accept a different grammatical case or aspect only if the meaning is the same.',
+  },
+} as const;
+type LanguageCode = keyof typeof LANGUAGES;
+
 let client: Anthropic | undefined;
 function getClient() {
   client ??= new Anthropic({ apiKey: anthropicApiKey.value() });
@@ -31,6 +43,15 @@ function requireString(value: unknown, field: string, maxLength: number): string
     throw new HttpsError('invalid-argument', `Pole "${field}" jest za długie.`);
   }
   return value.trim();
+}
+
+/** Older app versions did not send `lang`; they only supported English. */
+function requireLanguage(value: unknown) {
+  const code = value ?? 'en';
+  if (typeof code !== 'string' || !(code in LANGUAGES)) {
+    throw new HttpsError('invalid-argument', 'Nieobsługiwany język.');
+  }
+  return LANGUAGES[code as LanguageCode];
 }
 
 async function parseWithClaude<T extends z.ZodType>(system: string, prompt: string, schema: T) {
@@ -62,32 +83,39 @@ async function parseWithClaude<T extends z.ZodType>(system: string, prompt: stri
 // --- suggestWord ---------------------------------------------------------------
 
 const SuggestionSchema = z.object({
-  word: z.string().describe('The English word or phrase, with spelling corrected if needed (e.g. speech-recognition errors).'),
+  word: z.string().describe('The word or phrase in the target language, with spelling corrected if needed (e.g. speech-recognition errors).'),
   context: z.string().describe('The context sentence with obvious transcription errors fixed, or empty string if none was given.'),
   translations: z.array(z.string()).describe('1-4 Polish translations, most fitting for the given context first.'),
   partOfSpeech: z.string().describe('Part of speech in Polish, e.g. "rzeczownik", "czasownik", "przymiotnik", "wyrażenie".'),
-  definition: z.string().describe('A short English definition (max ~15 words).'),
+  definition: z.string().describe('A short definition in the target language (max ~15 words).'),
 });
 
 export type Suggestion = z.infer<typeof SuggestionSchema>;
 
 export const suggestWord = onCall({ secrets: [anthropicApiKey] }, async (request): Promise<Suggestion> => {
   requireAuth(request);
+  const language = requireLanguage(request.data?.lang);
   const word = requireString(request.data?.word, 'word', 100);
   const context = typeof request.data?.context === 'string' ? request.data.context.trim().slice(0, 500) : '';
 
   return parseWithClaude(
-    'You help a Polish speaker learn English vocabulary. The input may come from speech recognition, so fix obvious mis-hearings, ' +
-      'using the context sentence to disambiguate. Translate into natural Polish matching the meaning used in the context.',
-    `Word: ${word}\nContext sentence: ${context || '(none)'}`,
+    `You help a Polish speaker learn ${language.name} vocabulary. The input may come from speech recognition, so fix obvious ` +
+      'mis-hearings, using the context sentence to disambiguate. Translate into natural Polish matching the meaning used in ' +
+      `the context. Write the definition in ${language.name}, never in Polish or English unless that is the target language. ` +
+      language.notes,
+    `Target language: ${language.name}\nWord: ${word}\nContext sentence: ${context || '(none)'}`,
     SuggestionSchema,
   );
 });
 
 // --- checkAnswer ---------------------------------------------------------------
 
-const DIRECTIONS = ['en-pl', 'pl-en', 'cloze'] as const;
+/** translate: foreign word → Polish; recall: Polish → foreign word; cloze: fill the gap in the sentence. */
+const DIRECTIONS = ['translate', 'recall', 'cloze'] as const;
 type Direction = (typeof DIRECTIONS)[number];
+
+// Names used by app versions released before multi-language support.
+const LEGACY_DIRECTIONS: Record<string, Direction> = { 'en-pl': 'translate', 'pl-en': 'recall' };
 
 const GradeSchema = z.object({
   correct: z.boolean().describe('Whether the answer should be accepted.'),
@@ -101,7 +129,8 @@ function normalize(text: string) {
   return text
     .toLowerCase()
     .normalize('NFKC')
-    .replace(/[.,!?;:"'„”()]/g, '')
+    .replace(/ё/g, 'е')
+    .replace(/[.,!?;:"'„”«»()]/g, '')
     .replace(/^(to|a|an|the)\s+/, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -109,7 +138,9 @@ function normalize(text: string) {
 
 export const checkAnswer = onCall({ secrets: [anthropicApiKey] }, async (request): Promise<Grade> => {
   requireAuth(request);
-  const direction = request.data?.direction as Direction;
+  const language = requireLanguage(request.data?.lang);
+  const rawDirection = request.data?.direction;
+  const direction = (LEGACY_DIRECTIONS[rawDirection] ?? rawDirection) as Direction;
   if (!DIRECTIONS.includes(direction)) {
     throw new HttpsError('invalid-argument', 'Nieznany kierunek pytania.');
   }
@@ -120,7 +151,7 @@ export const checkAnswer = onCall({ secrets: [anthropicApiKey] }, async (request
     : [];
   const context = typeof request.data?.context === 'string' ? request.data.context.trim().slice(0, 500) : '';
 
-  const expected = direction === 'en-pl' ? translations : [word];
+  const expected = direction === 'translate' ? translations : [word];
   if (!userAnswer) {
     return { correct: false, score: 0, feedback: `Brak odpowiedzi. Poprawnie: ${expected.join(', ')}.` };
   }
@@ -129,18 +160,18 @@ export const checkAnswer = onCall({ secrets: [anthropicApiKey] }, async (request
     return { correct: true, score: 1, feedback: 'Dobrze!' };
   }
 
-  const task =
-    direction === 'en-pl'
-      ? `The learner was shown the English word "${word}" and had to give its Polish meaning.`
-      : direction === 'pl-en'
-        ? `The learner was shown the Polish meaning "${translations.join(', ')}" and had to give the English word "${word}".`
-        : `The learner had to fill the gap with the English word "${word}" in the sentence: "${context.replace(new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '____')}".`;
+  const gapped = context.replace(new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu'), '____');
+  const task = {
+    translate: `The learner was shown the ${language.name} word "${word}" and had to give its Polish meaning.`,
+    recall: `The learner was shown the Polish meaning "${translations.join(', ')}" and had to give the ${language.name} word "${word}".`,
+    cloze: `The learner had to fill the gap with the ${language.name} word "${word}" in the sentence: "${gapped}".`,
+  }[direction];
 
   return parseWithClaude(
-    'You grade vocabulary quiz answers for a Polish learner of English. The answer may come from speech recognition: ' +
+    `You grade vocabulary quiz answers for a Polish learner of ${language.name}. The answer may come from speech recognition: ` +
       'accept homophones and transcription slips when the intended word is clearly the expected one (e.g. "wait" heard ' +
-      'for "weight"). Accept valid synonyms and translations that fit the context, ignore ' +
-      'articles, capitalization and minor typos. Be fair but do not accept a different meaning.',
+      'for "weight"). Accept valid synonyms and translations that fit the context, ignore articles, capitalization and ' +
+      `minor typos. Be fair but do not accept a different meaning. ${language.notes}`,
     `${task}\nContext sentence: ${context || '(none)'}\nAccepted Polish translations: ${translations.join(', ') || '(none)'}\nLearner answer: "${userAnswer}"`,
     GradeSchema,
   );

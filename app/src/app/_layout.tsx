@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { SettingsProvider } from '@/lib/settings';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,6 +26,7 @@ function RootNavigator() {
         <Stack.Screen name="quiz/text" options={{ title: 'Quiz pisemny' }} />
         <Stack.Screen name="quiz/voice" options={{ title: 'Quiz głosowy' }} />
         <Stack.Screen name="quiz/summary" options={{ title: 'Podsumowanie', headerBackVisible: false }} />
+        <Stack.Screen name="settings" options={{ title: 'Ustawienia' }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -38,7 +40,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <RootNavigator />
+        <SettingsProvider>
+          <RootNavigator />
+        </SettingsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

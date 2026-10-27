@@ -17,6 +17,7 @@ import {
 
 import { dayKey, rangeStart, type RangeKey } from '@/lib/dates';
 import { db } from '@/lib/firebase';
+import { DEFAULT_LANGUAGE, isLanguageCode, type LanguageCode } from '@/lib/languages';
 
 /** Leitner box: 0 = new / just failed, MAX_BOX = well known. */
 export const MAX_BOX = 5;
@@ -24,7 +25,7 @@ export const MAX_BOX = 5;
 export type Word = {
   id: string;
   word: string;
-  lang: 'en';
+  lang: LanguageCode;
   translations: string[];
   context: string;
   partOfSpeech: string;
@@ -45,7 +46,8 @@ function fromSnapshot(snap: { id: string; data: () => any }): Word {
   return {
     id: snap.id,
     word: data.word,
-    lang: data.lang ?? 'en',
+    // Words saved before multi-language support have no lang and are English.
+    lang: isLanguageCode(data.lang) ? data.lang : DEFAULT_LANGUAGE,
     translations: data.translations ?? [],
     context: data.context ?? '',
     partOfSpeech: data.partOfSpeech ?? '',
@@ -62,8 +64,13 @@ function fromSnapshot(snap: { id: string; data: () => any }): Word {
   };
 }
 
-export function subscribeWords(uid: string, onChange: (words: Word[]) => void, onError?: (e: Error) => void) {
-  const q = query(wordsCollection(uid), orderBy('createdAt', 'desc'));
+export function subscribeWords(
+  uid: string,
+  lang: LanguageCode,
+  onChange: (words: Word[]) => void,
+  onError?: (e: Error) => void,
+) {
+  const q = query(wordsCollection(uid), where('lang', '==', lang), orderBy('createdAt', 'desc'));
   return onSnapshot(
     q,
     (snapshot) => onChange(snapshot.docs.map(fromSnapshot)),
@@ -71,11 +78,12 @@ export function subscribeWords(uid: string, onChange: (words: Word[]) => void, o
   );
 }
 
-export async function fetchWords(uid: string, range: RangeKey) {
+export async function fetchWords(uid: string, lang: LanguageCode, range: RangeKey) {
   const start = rangeStart(range);
+  const byLang = where('lang', '==', lang);
   const q = start
-    ? query(wordsCollection(uid), where('createdAt', '>=', Timestamp.fromDate(start)), orderBy('createdAt', 'desc'))
-    : query(wordsCollection(uid), orderBy('createdAt', 'desc'));
+    ? query(wordsCollection(uid), byLang, where('createdAt', '>=', Timestamp.fromDate(start)), orderBy('createdAt', 'desc'))
+    : query(wordsCollection(uid), byLang, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(fromSnapshot);
 }
@@ -85,10 +93,10 @@ export async function getWord(uid: string, id: string) {
   return snap.exists() ? fromSnapshot(snap) : null;
 }
 
-export function addWord(uid: string, input: WordInput) {
+export function addWord(uid: string, lang: LanguageCode, input: WordInput) {
   return addDoc(wordsCollection(uid), {
     ...input,
-    lang: 'en',
+    lang,
     createdAt: serverTimestamp(),
     dayKey: dayKey(),
     stats: { asked: 0, correct: 0, box: 0, lastAskedAt: null },
@@ -105,6 +113,13 @@ export function deleteWord(uid: string, id: string) {
 
 export function recordAnswer(uid: string, word: Word, correct: boolean) {
   const box = correct ? Math.min(word.stats.box + 1, MAX_BOX) : 0;
+  // Keep the in-memory copy current: the same word can come back in a later quiz round.
+  word.stats = {
+    asked: word.stats.asked + 1,
+    correct: word.stats.correct + (correct ? 1 : 0),
+    box,
+    lastAskedAt: new Date(),
+  };
   return updateDoc(doc(db, 'users', uid, 'words', word.id), {
     'stats.asked': increment(1),
     'stats.correct': increment(correct ? 1 : 0),

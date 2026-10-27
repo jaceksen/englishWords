@@ -10,19 +10,28 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { formatDayHeader } from '@/lib/dates';
+import { useSettings } from '@/lib/settings';
 import { deleteWord, MAX_BOX, subscribeWords, type Word } from '@/lib/words';
 
 export default function WordsScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
+  const { languageCode, language } = useSettings();
   const theme = useTheme();
-  const [words, setWords] = useState<Word[] | null>(null);
+  const [loaded, setLoaded] = useState<{ lang: string; words: Word[] } | null>(null);
+  // Words of the previously selected language are stale while the new ones load.
+  const words = loaded?.lang === languageCode ? loaded.words : null;
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!user) return;
-    return subscribeWords(user.uid, setWords, (e) => setError(e.message));
-  }, [user]);
+    return subscribeWords(
+      user.uid,
+      languageCode,
+      (result) => setLoaded({ lang: languageCode, words: result }),
+      (e) => setError(e.message),
+    );
+  }, [user, languageCode]);
 
   const sections = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -50,11 +59,10 @@ export default function WordsScreen() {
     <ThemedView style={styles.container}>
       <Stack.Screen
         options={{
+          title: `${language.flag} Moje słówka`,
           headerRight: () => (
-            <Pressable onPress={signOut} hitSlop={8}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Wyloguj
-              </ThemedText>
+            <Pressable onPress={() => router.push('/settings')} hitSlop={8} accessibilityLabel="Ustawienia">
+              <ThemedText style={styles.headerIcon}>⚙️</ThemedText>
             </Pressable>
           ),
         }}
@@ -133,6 +141,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
     gap: Spacing.two,
+  },
+  headerIcon: {
+    fontSize: 22,
   },
   search: {
     minHeight: 44,

@@ -1,6 +1,7 @@
 import { httpsCallable } from '@react-native-firebase/functions';
 
 import { functions } from '@/lib/firebase';
+import type { LanguageCode } from '@/lib/languages';
 
 // Shapes mirror functions/src/index.ts.
 export type Suggestion = {
@@ -11,11 +12,13 @@ export type Suggestion = {
   definition: string;
 };
 
-export type Direction = 'en-pl' | 'pl-en' | 'cloze';
+/** translate: foreign word → Polish; recall: Polish → foreign word; cloze: fill the gap in the sentence. */
+export type Direction = 'translate' | 'recall' | 'cloze';
 
 export type Grade = { correct: boolean; score: number; feedback: string };
 
 type CheckAnswerRequest = {
+  lang: LanguageCode;
   direction: Direction;
   word: string;
   translations: string[];
@@ -23,11 +26,14 @@ type CheckAnswerRequest = {
   userAnswer: string;
 };
 
-const suggestWordFn = httpsCallable<{ word: string; context: string }, Suggestion>(functions, 'suggestWord');
+const suggestWordFn = httpsCallable<{ lang: LanguageCode; word: string; context: string }, Suggestion>(
+  functions,
+  'suggestWord',
+);
 const checkAnswerFn = httpsCallable<CheckAnswerRequest, Grade>(functions, 'checkAnswer');
 
-export async function suggestWord(word: string, context: string) {
-  return (await suggestWordFn({ word, context })).data;
+export async function suggestWord(lang: LanguageCode, word: string, context: string) {
+  return (await suggestWordFn({ lang, word, context })).data;
 }
 
 export async function checkAnswer(request: CheckAnswerRequest) {

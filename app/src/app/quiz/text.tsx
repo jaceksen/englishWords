@@ -1,20 +1,41 @@
 import { router } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput } from 'react-native';
 
 import { Button } from '@/components/button';
 import { QuestionCard } from '@/components/question-card';
+import { RoundBreakCard } from '@/components/round-break-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useQuiz } from '@/hooks/use-quiz';
 import { useTheme } from '@/hooks/use-theme';
 
+const ROUND_BREAK_MS = 2500;
+
 export default function TextQuizScreen() {
   const theme = useTheme();
   const quiz = useQuiz();
   const [answer, setAnswer] = useState('');
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const { roundBreak, continueToNextRound } = quiz;
+
+  // Between rounds: show the score briefly, then start the next round without a tap.
+  useEffect(() => {
+    if (!roundBreak) return;
+    const timer = setTimeout(continueToNextRound, ROUND_BREAK_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roundBreak]);
+
+  if (roundBreak) {
+    return (
+      <ThemedView style={[styles.container, styles.content]}>
+        <RoundBreakCard roundBreak={roundBreak} />
+        <Button title="Dalej" onPress={continueToNextRound} />
+      </ThemedView>
+    );
+  }
 
   if (!quiz.question) {
     return (
@@ -35,7 +56,14 @@ export default function TextQuizScreen() {
     <ThemedView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <QuestionCard question={quiz.question} index={quiz.index} total={quiz.total} result={quiz.result} />
+          <QuestionCard
+            question={quiz.question}
+            index={quiz.index}
+            total={quiz.total}
+            round={quiz.round}
+            rounds={quiz.rounds}
+            result={quiz.result}
+          />
           <TextInput
             ref={inputRef}
             value={answer}
@@ -52,7 +80,10 @@ export default function TextQuizScreen() {
           />
           {quiz.error && <ThemedText themeColor="danger">{quiz.error}</ThemedText>}
           {quiz.result ? (
-            <Button title={quiz.index + 1 < quiz.total ? 'Dalej' : 'Zakończ'} onPress={handleNext} />
+            <Button
+              title={quiz.index + 1 < quiz.total || quiz.round < quiz.rounds ? 'Dalej' : 'Zakończ'}
+              onPress={handleNext}
+            />
           ) : (
             <Button title="Sprawdź" onPress={() => quiz.submit(answer)} loading={quiz.grading} />
           )}

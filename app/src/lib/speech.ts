@@ -2,7 +2,9 @@ import * as Speech from 'expo-speech';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useCallback, useRef, useState } from 'react';
 
-export type SpeechLang = 'en-US' | 'pl-PL';
+import type { Language, NATIVE_SPEECH } from '@/lib/languages';
+
+export type SpeechLang = typeof NATIVE_SPEECH | Language['speech'];
 
 /** Speaks `text` and resolves when finished (or stopped). */
 export function speak(text: string, language: SpeechLang, rate = 0.95) {

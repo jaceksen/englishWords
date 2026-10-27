@@ -4,29 +4,33 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import type { Grade } from '@/lib/ai';
-import { DIRECTION_LABELS, type Question } from '@/lib/quiz';
+import { LANGUAGES } from '@/lib/languages';
+import { directionLabel, type Question } from '@/lib/quiz';
 
 type QuestionCardProps = {
   question: Question;
   index: number;
   total: number;
+  round?: number;
+  rounds?: number;
   result: Grade | null;
 };
 
-const INSTRUCTIONS = {
-  'en-pl': 'Podaj polskie znaczenie',
-  'pl-en': 'Podaj słówko po angielsku',
-  cloze: 'Uzupełnij lukę',
-} as const;
-
-export function QuestionCard({ question, index, total, result }: QuestionCardProps) {
+export function QuestionCard({ question, index, total, round = 1, rounds = 1, result }: QuestionCardProps) {
+  const language = LANGUAGES[question.word.lang];
+  const instruction = {
+    translate: 'Podaj polskie znaczenie',
+    recall: `Podaj słówko ${language.adverb}`,
+    cloze: 'Uzupełnij lukę',
+  }[question.direction];
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedText type="small" themeColor="textSecondary">
-        {index + 1} / {total} · {DIRECTION_LABELS[question.direction]}
+        {rounds > 1 && `Runda ${round}/${rounds} · `}
+        {index + 1} / {total} · {directionLabel(question.direction, language)}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        {INSTRUCTIONS[question.direction]}
+        {instruction}
       </ThemedText>
       <ThemedText style={question.direction === 'cloze' ? styles.sentence : styles.prompt}>{question.prompt}</ThemedText>
       {question.direction === 'cloze' && question.word.translations.length > 0 && (

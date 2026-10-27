@@ -9,6 +9,8 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { suggestWord } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
+import { LANGUAGES, type LanguageCode } from '@/lib/languages';
+import { useSettings } from '@/lib/settings';
 import { useSpeechInput } from '@/lib/speech';
 import { addWord, getWord, updateWord, type WordInput } from '@/lib/words';
 
@@ -24,6 +26,10 @@ function splitTranslations(text: string) {
 export default function AddWordScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { user } = useAuth();
+  const settings = useSettings();
+  // A word being edited keeps its own language, even if the setting changed since.
+  const [lang, setLang] = useState<LanguageCode>(settings.languageCode);
+  const language = LANGUAGES[lang];
   const speech = useSpeechInput();
   const [target, setTarget] = useState<VoiceTarget | null>(null);
 
@@ -41,6 +47,7 @@ export default function AddWordScreen() {
     if (!user || !id) return;
     getWord(user.uid, id).then((existing) => {
       if (!existing) return;
+      setLang(existing.lang);
       setWord(existing.word);
       setContext(existing.context);
       setTranslations(existing.translations.join(', '));
@@ -55,7 +62,7 @@ export default function AddWordScreen() {
       return;
     }
     setTarget(field);
-    const text = await speech.listen('en-US', { short: field === 'word' });
+    const text = await speech.listen(language.speech, { short: field === 'word' });
     setTarget(null);
     if (!text) return;
     if (field === 'word') setWord(text);
@@ -67,7 +74,7 @@ export default function AddWordScreen() {
     setSuggesting(true);
     setError(null);
     try {
-      const s = await suggestWord(word.trim(), context.trim());
+      const s = await suggestWord(lang, word.trim(), context.trim());
       setWord(s.word);
       setContext(s.context);
       setTranslations(s.translations.join(', '));
@@ -99,7 +106,7 @@ export default function AddWordScreen() {
         input = (await suggest()) ?? input;
       }
       if (id) await updateWord(user.uid, id, input);
-      else await addWord(user.uid, input);
+      else await addWord(user.uid, lang, input);
       router.back();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -110,24 +117,24 @@ export default function AddWordScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: id ? 'Edytuj słówko' : 'Dodaj słówko' }} />
+      <Stack.Screen options={{ title: `${language.flag} ${id ? 'Edytuj słówko' : 'Dodaj słówko'}` }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Field
-            label="Słówko (EN)"
+            label={`Słówko (${language.name.toLowerCase()})`}
             value={target === 'word' && speech.listening ? speech.partial : word}
             onChangeText={setWord}
             autoCapitalize="none"
-            placeholder="np. reluctant"
+            placeholder={language.wordPlaceholder}
             onMicPress={() => dictate('word')}
             listening={target === 'word' && speech.listening}
           />
           <Field
-            label="Zdanie z kontekstem (EN)"
+            label={`Zdanie z kontekstem (${language.name.toLowerCase()})`}
             value={target === 'context' && speech.listening ? speech.partial : context}
             onChangeText={setContext}
             multiline
-            placeholder="np. She was reluctant to leave."
+            placeholder={language.contextPlaceholder}
             onMicPress={() => dictate('context')}
             listening={target === 'context' && speech.listening}
           />

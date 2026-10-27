@@ -5,17 +5,37 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { getSession, startSession } from '@/lib/quiz';
+import { allRounds, createSession, getSession, startSession, type QuizResult } from '@/lib/quiz';
+import type { Word } from '@/lib/words';
+
+type Difficult = { word: Word; misses: number; last: QuizResult };
+
+/** Words answered wrong at least once in any round, most missed first. */
+function difficultWords(rounds: QuizResult[][]) {
+  const byWord = new Map<string, Difficult>();
+  for (const result of rounds.flat()) {
+    if (result.grade.correct) continue;
+    const entry = byWord.get(result.question.word.id);
+    byWord.set(result.question.word.id, {
+      word: result.question.word,
+      misses: (entry?.misses ?? 0) + 1,
+      last: result,
+    });
+  }
+  return [...byWord.values()].sort((a, b) => b.misses - a.misses);
+}
 
 export default function SummaryScreen() {
   const session = getSession();
-  const results = session?.results ?? [];
+  const rounds = session ? allRounds(session) : [];
+  const results = rounds.flat();
   const correct = results.filter((r) => r.grade.correct).length;
-  const wrong = results.filter((r) => !r.grade.correct);
+  const difficult = difficultWords(rounds);
 
-  function retryWrong() {
+  function retryDifficult() {
     if (!session) return;
-    startSession({ mode: session.mode, questions: wrong.map((r) => r.question), results: [] });
+    const pool = difficult.map((d) => d.word);
+    startSession(createSession({ mode: session.mode, direction: session.direction, count: pool.length, rounds: 1, pool }));
     router.replace(session.mode === 'text' ? '/quiz/text' : '/quiz/voice');
   }
 
@@ -28,29 +48,49 @@ export default function SummaryScreen() {
         <ThemedText themeColor="textSecondary" style={styles.center}>
           {results.length === 0
             ? 'Brak odpowiedzi.'
-            : wrong.length === 0
+            : difficult.length === 0
               ? 'Wszystko dobrze, świetna robota!'
-              : `Do powtórki: ${wrong.length}`}
+              : `Do powtórki: ${difficult.length}`}
         </ThemedText>
 
-        {wrong.map(({ question, answer, grade }, i) => (
-          <ThemedView key={i} type="backgroundElement" style={styles.card}>
-            <ThemedText type="smallBold">{question.prompt}</ThemedText>
+        {rounds.length > 1 && (
+          <ThemedView type="backgroundElement" style={styles.card}>
+            {rounds.map((round, i) => (
+              <View key={i} style={styles.row}>
+                <ThemedText type="small">Runda {i + 1}</ThemedText>
+                <ThemedText type="smallBold">
+                  {round.filter((r) => r.grade.correct).length} / {round.length}
+                </ThemedText>
+              </View>
+            ))}
+          </ThemedView>
+        )}
+
+        {difficult.map(({ word, misses, last }) => (
+          <ThemedView key={word.id} type="backgroundElement" style={styles.card}>
+            <View style={styles.row}>
+              <ThemedText type="smallBold">{last.question.prompt}</ThemedText>
+              {rounds.length > 1 && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  błędów: {misses}
+                </ThemedText>
+              )}
+            </View>
             <View style={styles.row}>
               <ThemedText type="small" themeColor="danger">
-                {answer || '(brak odpowiedzi)'}
+                {last.answer || '(brak odpowiedzi)'}
               </ThemedText>
               <ThemedText type="small" themeColor="success">
-                {question.expected}
+                {last.question.expected}
               </ThemedText>
             </View>
             <ThemedText type="small" themeColor="textSecondary">
-              {grade.feedback}
+              {last.grade.feedback}
             </ThemedText>
           </ThemedView>
         ))}
 
-        {wrong.length > 0 && <Button title="Powtórz błędne" onPress={retryWrong} />}
+        {difficult.length > 0 && <Button title="Powtórz błędne" onPress={retryDifficult} />}
         <Button title="Nowy quiz" variant="secondary" onPress={() => router.replace('/quiz/setup')} />
         <Button title="Lista słówek" variant="secondary" onPress={() => router.dismissTo('/')} />
       </ScrollView>
