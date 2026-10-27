@@ -183,6 +183,20 @@ const fr: Translations = {
     account: 'Compte',
     signOut: 'Se déconnecter',
   },
+  plans: {
+    title: 'Formule',
+    free: 'Gratuit',
+    proMonthly: 'Pro – mensuel',
+    proLifetime: 'Pro – à vie',
+    freeDetail: (limit) => `Jusqu’à ${limit} mots`,
+    proMonthlyDetail: (price) => `${price} / mois · mots illimités`,
+    proLifetimeDetail: (price) => `${price} en une fois · mots illimités`,
+    usage: (count, limit) => `Mots enregistrés : ${count} / ${limit}`,
+    unlimited: (count) => `Mots enregistrés : ${count} · sans limite`,
+    limitReached: (limit) =>
+      `La formule gratuite permet d’enregistrer jusqu’à ${limit} mots. Passez à Pro pour ajouter des mots sans limite.`,
+    upgrade: 'Voir les formules Pro',
+  },
 };
 
 export default fr;

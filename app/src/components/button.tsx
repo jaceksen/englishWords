@@ -1,12 +1,12 @@
 import { ActivityIndicator, Pressable, StyleSheet, type PressableProps } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { ButtonBorder, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ButtonProps = PressableProps & {
   title: string;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'white';
   loading?: boolean;
 };
 
@@ -16,8 +16,9 @@ export function Button({ title, variant = 'primary', loading, disabled, style, .
     primary: theme.primary,
     secondary: theme.backgroundElement,
     danger: theme.danger,
+    white: '#ffffff',
   }[variant];
-  const color = variant === 'secondary' ? theme.text : theme.onPrimary;
+  const color = variant === 'secondary' ? theme.text : variant === 'white' ? '#1F1F1F' : theme.onPrimary;
 
   return (
     <Pressable
@@ -25,6 +26,7 @@ export function Button({ title, variant = 'primary', loading, disabled, style, .
       disabled={disabled || loading}
       style={(state) => [
         styles.button,
+        variant === 'white' && styles.white,
         { backgroundColor: background, opacity: disabled ? 0.5 : state.pressed ? 0.8 : 1 },
         typeof style === 'function' ? style(state) : style,
       ]}
@@ -47,5 +49,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     alignItems: 'center',
     justifyContent: 'center',
+    ...ButtonBorder,
+  },
+  // A white outline would disappear on a white button.
+  white: {
+    borderWidth: 1,
+    borderColor: '#DADCE0',
   },
 });

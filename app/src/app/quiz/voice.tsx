@@ -1,19 +1,21 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { MicButton } from '@/components/mic-button';
 import { QuestionCard } from '@/components/question-card';
 import { RoundBreakCard, roundBreakMessage } from '@/components/round-break-card';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { useQuiz } from '@/hooks/use-quiz';
 import { UI_LANGUAGES } from '@/i18n';
 import { LANGUAGES } from '@/lib/languages';
 import { useSettings } from '@/lib/settings';
 import { speak, stopSpeaking, useSpeechInput } from '@/lib/speech';
+
+const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-voice.jpg');
 
 const PAUSE_AFTER_RESULT_MS = 1200;
 
@@ -98,25 +100,25 @@ export default function VoiceQuizScreen() {
 
   if (quiz.roundBreak) {
     return (
-      <ThemedView style={[styles.container, styles.content]}>
+      <ScreenBackground source={BACKGROUND} style={[styles.container, styles.content]}>
         <RoundBreakCard roundBreak={quiz.roundBreak} />
         <Button title={paused ? t.voice.resume : t.voice.pause} variant="secondary" onPress={() => setPaused((p) => !p)} />
         <Button title={t.voice.end} variant="danger" onPress={() => router.replace('/quiz/summary')} />
-      </ThemedView>
+      </ScreenBackground>
     );
   }
 
   if (!quiz.question) {
     return (
-      <ThemedView style={[styles.container, styles.content]}>
+      <ScreenBackground source={BACKGROUND} style={[styles.container, styles.content]}>
         <ThemedText>{t.quiz.noQuiz}</ThemedText>
         <Button title={t.common.back} onPress={() => router.replace('/')} />
-      </ThemedView>
+      </ScreenBackground>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <QuestionCard
           question={quiz.question}
@@ -126,7 +128,7 @@ export default function VoiceQuizScreen() {
           rounds={quiz.rounds}
           result={quiz.result}
         />
-        <ThemedView style={styles.listening}>
+        <View style={styles.listening}>
           <MicButton listening={speech.listening} onPress={() => speech.stop()} size={88} disabled={!speech.listening} />
           <ThemedText themeColor="textSecondary">{paused ? t.voice.paused : status}</ThemedText>
           {!!(speech.listening ? speech.partial : heard) && (
@@ -134,7 +136,7 @@ export default function VoiceQuizScreen() {
               {speech.listening ? speech.partial : heard}
             </ThemedText>
           )}
-        </ThemedView>
+        </View>
         {(quiz.error || speech.error) && <ThemedText themeColor="danger">{quiz.error ?? speech.error}</ThemedText>}
         {quiz.error && <Button title={t.voice.skip} variant="secondary" onPress={quiz.next} />}
         <Button
@@ -144,7 +146,7 @@ export default function VoiceQuizScreen() {
         />
         <Button title={t.voice.end} variant="danger" onPress={() => router.replace('/quiz/summary')} />
       </ScrollView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 

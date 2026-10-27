@@ -182,6 +182,20 @@ const ru: Translations = {
     account: 'Аккаунт',
     signOut: 'Выйти',
   },
+  plans: {
+    title: 'Тариф',
+    free: 'Бесплатный',
+    proMonthly: 'Pro – ежемесячно',
+    proLifetime: 'Pro – навсегда',
+    freeDetail: (limit) => `До ${limit} слов`,
+    proMonthlyDetail: (price) => `${price} / месяц · без ограничения слов`,
+    proLifetimeDetail: (price) => `${price} единоразово · без ограничения слов`,
+    usage: (count, limit) => `Сохранено слов: ${count} / ${limit}`,
+    unlimited: (count) => `Сохранено слов: ${count} · без ограничений`,
+    limitReached: (limit) =>
+      `В бесплатном тарифе можно сохранить до ${limit} слов. Перейдите на Pro, чтобы добавлять слова без ограничений.`,
+    upgrade: 'Тарифы Pro',
+  },
 };
 
 export default ru;

@@ -182,6 +182,20 @@ const es: Translations = {
     account: 'Cuenta',
     signOut: 'Cerrar sesión',
   },
+  plans: {
+    title: 'Plan',
+    free: 'Gratis',
+    proMonthly: 'Pro – mensual',
+    proLifetime: 'Pro – de por vida',
+    freeDetail: (limit) => `Hasta ${limit} palabras`,
+    proMonthlyDetail: (price) => `${price} / mes · palabras ilimitadas`,
+    proLifetimeDetail: (price) => `${price} pago único · palabras ilimitadas`,
+    usage: (count, limit) => `Palabras guardadas: ${count} / ${limit}`,
+    unlimited: (count) => `Palabras guardadas: ${count} · sin límite`,
+    limitReached: (limit) =>
+      `El plan gratuito permite guardar hasta ${limit} palabras. Pásate a Pro para añadir palabras sin límite.`,
+    upgrade: 'Ver planes Pro',
+  },
 };
 
 export default es;

@@ -92,6 +92,12 @@ export async function fetchWords(uid: string, lang: LanguageCode, range: RangeKe
   return snapshot.docs.map(fromSnapshot);
 }
 
+/** All the user's words, in every learning language. */
+export async function countWords(uid: string) {
+  const snapshot = await getDocs(wordsCollection(uid));
+  return snapshot.size;
+}
+
 export async function getWord(uid: string, id: string) {
   const snap = await getDoc(doc(db, 'users', uid, 'words', id));
   return snap.exists() ? fromSnapshot(snap) : null;

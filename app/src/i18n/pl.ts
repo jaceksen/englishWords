@@ -184,6 +184,20 @@ const pl = {
     account: 'Konto',
     signOut: 'Wyloguj',
   },
+  plans: {
+    title: 'Plan',
+    free: 'Darmowy',
+    proMonthly: 'Pro – miesięczny',
+    proLifetime: 'Pro – dożywotni',
+    freeDetail: (limit: number) => `Do ${limit} słówek`,
+    proMonthlyDetail: (price: string) => `${price} / miesiąc · bez limitu słówek`,
+    proLifetimeDetail: (price: string) => `${price} jednorazowo · bez limitu słówek`,
+    usage: (count: number, limit: number) => `Zapisane słówka: ${count} / ${limit}`,
+    unlimited: (count: number) => `Zapisane słówka: ${count} · bez limitu`,
+    limitReached: (limit: number) =>
+      `W planie darmowym możesz zapisać do ${limit} słówek. Przejdź na Pro, aby dodawać bez limitu.`,
+    upgrade: 'Zobacz plany Pro',
+  },
 };
 
 export type Translations = typeof pl;

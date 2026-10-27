@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { ButtonBorder, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ChipsProps<T extends string | number> = {
@@ -16,9 +16,7 @@ export function Chips<T extends string | number>({ label, options, value, onChan
   const theme = useTheme();
   return (
     <View style={styles.container}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
+      <ThemedText style={styles.label}>{label}</ThemedText>
       <View style={styles.row}>
         {options.map((option) => {
           const selected = option.value === value;
@@ -44,14 +42,22 @@ const styles = StyleSheet.create({
   container: {
     gap: Spacing.two,
   },
+  label: {
+    fontSize: 18,
+    lineHeight: 26,
+    fontWeight: 700,
+    textAlign: 'center',
+  },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: Spacing.two,
   },
   chip: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     borderRadius: Spacing.four,
+    ...ButtonBorder,
   },
 });

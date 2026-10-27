@@ -1,13 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ImageBackground, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { Field } from '@/components/field';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { authErrorMessage, useAuth } from '@/lib/auth';
@@ -35,80 +34,90 @@ export default function LoginScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ImageBackground
+      source={require('@/assets/images/login-bg.jpg')}
+      resizeMode="cover"
+      style={[styles.container, { backgroundColor: '#0B1030' }]}>
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <ThemedText type="subtitle" style={styles.center}>
-              VocabSprint
-            </ThemedText>
-            <ThemedText themeColor="textSecondary" style={styles.center}>
-              {t.login.tagline}
-            </ThemedText>
+            <View style={[styles.card, { backgroundColor: theme.background + 'D9' }]}>
+              <ThemedText type="subtitle" style={styles.center}>
+                VocabSprint
+              </ThemedText>
+              <ThemedText themeColor="textSecondary" style={styles.center}>
+                {t.login.tagline}
+              </ThemedText>
 
-            <Field
-              label={t.common.email}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-            />
-            <Field
-              label={t.common.password}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoComplete="current-password"
-              textContentType="password"
-              onSubmitEditing={() => run('email', () => signInWithEmail(email, password))}
-            />
-            <View style={styles.forgot}>
-              <TextLink
-                title={t.login.forgotPassword}
-                onPress={() => router.push({ pathname: '/forgot-password', params: { email } })}
+              <Field
+                label={t.common.email}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                textContentType="emailAddress"
               />
-            </View>
-            <Button
-              title={t.login.signIn}
-              onPress={() => run('email', () => signInWithEmail(email, password))}
-              loading={loading === 'email'}
-              disabled={!email.trim() || !password || loading !== null}
-            />
+              <Field
+                label={t.common.password}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="current-password"
+                textContentType="password"
+                onSubmitEditing={() => run('email', () => signInWithEmail(email, password))}
+              />
+              <View style={styles.forgot}>
+                <TextLink
+                  title={t.login.forgotPassword}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/forgot-password',
+                      params: { email },
+                    })
+                  }
+                />
+              </View>
+              <Button
+                title={t.login.signIn}
+                onPress={() => run('email', () => signInWithEmail(email, password))}
+                loading={loading === 'email'}
+                disabled={!email.trim() || !password || loading !== null}
+              />
 
-            {error && (
-              <ThemedText type="small" themeColor="danger" style={styles.center}>
-                {error}
-              </ThemedText>
-            )}
+              {error && (
+                <ThemedText type="small" themeColor="danger" style={styles.center}>
+                  {error}
+                </ThemedText>
+              )}
 
-            <View style={styles.divider}>
-              <View style={[styles.line, { backgroundColor: theme.border }]} />
-              <ThemedText type="small" themeColor="textSecondary">
-                {t.login.or}
-              </ThemedText>
-              <View style={[styles.line, { backgroundColor: theme.border }]} />
-            </View>
+              <View style={styles.divider}>
+                <View style={[styles.line, { backgroundColor: theme.border }]} />
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t.login.or}
+                </ThemedText>
+                <View style={[styles.line, { backgroundColor: theme.border }]} />
+              </View>
 
-            <Button
-              title={t.login.google}
-              variant="secondary"
-              onPress={() => run('google', signIn)}
-              loading={loading === 'google'}
-              disabled={loading !== null}
-            />
+              <Button
+                title={t.login.google}
+                variant="white"
+                onPress={() => run('google', signIn)}
+                loading={loading === 'google'}
+                disabled={loading !== null}
+              />
 
-            <View style={styles.register}>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t.login.noAccount}
-              </ThemedText>
-              <TextLink title={t.login.createAccount} onPress={() => router.push('/register')} />
+              <View style={styles.register}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t.login.noAccount}
+                </ThemedText>
+                <TextLink title={t.login.createAccount} onPress={() => router.push('/register')} />
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ThemedView>
+    </ImageBackground>
   );
 }
 
@@ -121,6 +130,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.five,
+  },
+  card: {
+    borderRadius: Spacing.four,
+    padding: Spacing.four,
     gap: Spacing.three,
   },
   center: {

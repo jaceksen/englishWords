@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { Button } from '@/components/button';
 import { Chips } from '@/components/chips';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { RANGE_KEYS, type RangeKey } from '@/lib/dates';
@@ -20,6 +20,8 @@ import {
 import { useSettings } from '@/lib/settings';
 import { fetchWords, type Word } from '@/lib/words';
 
+const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-setup.jpg');
+
 const COUNTS = [5, 10, 20, 0] as const; // 0 = all
 
 export default function QuizSetupScreen() {
@@ -27,7 +29,7 @@ export default function QuizSetupScreen() {
   const { languageCode, language, uiLanguageCode, t } = useSettings();
   const [range, setRange] = useState<RangeKey>('today');
   const [direction, setDirection] = useState<DirectionChoice>('translate');
-  const [mode, setMode] = useState<QuizMode>('text');
+  const [mode, setMode] = useState<QuizMode>('voice');
   const [count, setCount] = useState<number>(10);
   const [rounds, setRounds] = useState<number>(1);
   const [loaded, setLoaded] = useState<{ key: string; words: Word[] } | null>(null);
@@ -52,7 +54,7 @@ export default function QuizSetupScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Chips
           label={t.setup.range}
@@ -91,17 +93,21 @@ export default function QuizSetupScreen() {
           options={ROUND_OPTIONS.map((value) => ({ value, label: value === 1 ? t.setup.noRepeat : `${value}×` }))}
         />
         {rounds > 1 && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
             {t.setup.roundsHint}
           </ThemedText>
         )}
-        <ThemedText themeColor="textSecondary">
+        <ThemedText themeColor="textSecondary" style={styles.center}>
           {words === null ? t.common.loading : `${language.flag} ${t.setup.wordsInRange(words.length)}`}
         </ThemedText>
-        {error && <ThemedText themeColor="danger">{error}</ThemedText>}
+        {error && (
+          <ThemedText themeColor="danger" style={styles.center}>
+            {error}
+          </ThemedText>
+        )}
         <Button title={t.setup.start} onPress={start} disabled={!words?.length} />
       </ScrollView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 
@@ -112,5 +118,8 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.four,
+  },
+  center: {
+    textAlign: 'center',
   },
 });

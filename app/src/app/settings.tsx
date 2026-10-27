@@ -1,18 +1,23 @@
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { UI_LANGUAGES, type UiLanguageCode } from '@/i18n';
 import { useAuth } from '@/lib/auth';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
+import { PLANS, type PlanCode } from '@/lib/plans';
 import { useSettings } from '@/lib/settings';
+import { countWords } from '@/lib/words';
 
-type Option<T extends string> = { value: T; flag: string; label: string };
+const BACKGROUND = require('@/assets/images/backgrounds/bg-settings.jpg');
 
-function LanguagePicker<T extends string>({
+type Option<T extends string> = { value: T; flag: string; label: string; detail?: string };
+
+function OptionPicker<T extends string>({
   options,
   value,
   onChange,
@@ -35,7 +40,14 @@ function LanguagePicker<T extends string>({
           { backgroundColor: theme.backgroundElement, borderColor: selected ? theme.primary : 'transparent' },
         ]}>
         <ThemedText style={styles.flag}>{option.flag}</ThemedText>
-        <ThemedText style={styles.optionLabel}>{option.label}</ThemedText>
+        <View style={styles.optionLabel}>
+          <ThemedText>{option.label}</ThemedText>
+          {!!option.detail && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {option.detail}
+            </ThemedText>
+          )}
+        </View>
         {selected && <ThemedText themeColor="primary">✓</ThemedText>}
       </Pressable>
     );
@@ -44,17 +56,41 @@ function LanguagePicker<T extends string>({
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
-  const { t, languageCode, setLanguage, uiLanguageCode, setUiLanguage } = useSettings();
+  const { t, languageCode, setLanguage, uiLanguageCode, setUiLanguage, planCode, plan, setPlan } = useSettings();
+  const [wordCount, setWordCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    countWords(user.uid)
+      .then(setWordCount)
+      .catch(() => setWordCount(null));
+  }, [user]);
+
+  const planOptions: Option<PlanCode>[] = [
+    { value: 'free', flag: PLANS.free.icon, label: t.plans.free, detail: t.plans.freeDetail(PLANS.free.wordLimit) },
+    {
+      value: 'pro_monthly',
+      flag: PLANS.pro_monthly.icon,
+      label: t.plans.proMonthly,
+      detail: t.plans.proMonthlyDetail(PLANS.pro_monthly.price),
+    },
+    {
+      value: 'pro_lifetime',
+      flag: PLANS.pro_lifetime.icon,
+      label: t.plans.proLifetime,
+      detail: t.plans.proLifetimeDetail(PLANS.pro_lifetime.price),
+    },
+  ];
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.section}>
           <ThemedText type="smallBold">{t.settings.appLanguage}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t.settings.appLanguageHint}
           </ThemedText>
-          <LanguagePicker
+          <OptionPicker
             value={uiLanguageCode}
             onChange={setUiLanguage}
             // Each language under its own name, so it can be found whatever the current language is.
@@ -71,7 +107,7 @@ export default function SettingsScreen() {
           <ThemedText type="small" themeColor="textSecondary">
             {t.settings.learningLanguageHint}
           </ThemedText>
-          <LanguagePicker
+          <OptionPicker
             value={languageCode}
             onChange={setLanguage}
             options={(Object.keys(LANGUAGES) as LanguageCode[]).map((code) => ({
@@ -83,6 +119,16 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <ThemedText type="smallBold">{t.plans.title}</ThemedText>
+          {wordCount !== null && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {plan.wordLimit === null ? t.plans.unlimited(wordCount) : t.plans.usage(wordCount, plan.wordLimit)}
+            </ThemedText>
+          )}
+          <OptionPicker value={planCode} onChange={setPlan} options={planOptions} />
+        </View>
+
+        <View style={styles.section}>
           <ThemedText type="smallBold">{t.settings.account}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {user?.email ?? user?.displayName ?? '—'}
@@ -90,7 +136,7 @@ export default function SettingsScreen() {
           <Button title={t.settings.signOut} variant="secondary" onPress={signOut} />
         </View>
       </ScrollView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 
@@ -119,5 +165,6 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     flex: 1,
+    gap: Spacing.half,
   },
 });

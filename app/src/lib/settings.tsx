@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { auth, db } from '@/lib/firebase';
 import { DEFAULT_LANGUAGE, isLanguageCode, LANGUAGES, type Language, type LanguageCode } from '@/lib/languages';
+import { DEFAULT_PLAN, isPlanCode, PLANS, type Plan, type PlanCode } from '@/lib/plans';
 
 type SettingsState = {
   /** Language being learned. */
@@ -24,6 +25,9 @@ type SettingsState = {
   uiLanguageCode: UiLanguageCode;
   uiLanguage: UiLanguage;
   setUiLanguage: (code: UiLanguageCode) => Promise<void>;
+  planCode: PlanCode;
+  plan: Plan;
+  setPlan: (code: PlanCode) => Promise<void>;
   t: Translations;
 };
 
@@ -37,11 +41,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [languageCode, setLanguageCodeState] = useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [uiLanguageCode, setUiLanguageCode] = useState<UiLanguageCode>(deviceUiLanguage);
+  const [planCode, setPlanCode] = useState<PlanCode>(DEFAULT_PLAN);
 
   useEffect(() => {
     if (!user) return;
     return onSnapshot(doc(db, 'users', user.uid), (snap) => {
-      const settings = snap.data()?.settings;
+      const data = snap.data();
+      setPlanCode(isPlanCode(data?.plan) ? data.plan : DEFAULT_PLAN);
+      const settings = data?.settings;
       setLanguageCodeState(isLanguageCode(settings?.language) ? settings.language : DEFAULT_LANGUAGE);
       if (isUiLanguageCode(settings?.uiLanguage)) setUiLanguageCode(settings.uiLanguage);
     });
@@ -66,6 +73,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     await save({ uiLanguage: code });
   }
 
+  async function setPlan(code: PlanCode) {
+    setPlanCode(code);
+    if (user) await setDoc(doc(db, 'users', user.uid), { plan: code }, { merge: true });
+  }
+
   return (
     <SettingsContext
       value={{
@@ -75,6 +87,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         uiLanguageCode,
         uiLanguage: UI_LANGUAGES[uiLanguageCode],
         setUiLanguage,
+        planCode,
+        plan: PLANS[planCode],
+        setPlan,
         t: getTranslations(uiLanguageCode),
       }}>
       {children}

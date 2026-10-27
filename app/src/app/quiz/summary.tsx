@@ -3,11 +3,14 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
+import { ScreenBackground } from '@/components/screen-background';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { allRounds, createSession, getSession, startSession, type QuizResult } from '@/lib/quiz';
 import { useSettings } from '@/lib/settings';
 import type { Word } from '@/lib/words';
+
+const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-summary.jpg');
 
 type Difficult = { word: Word; misses: number; last: QuizResult };
 
@@ -51,7 +54,7 @@ export default function SummaryScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <ThemedText type="subtitle" style={styles.center}>
           {correct} / {results.length}
@@ -78,9 +81,9 @@ export default function SummaryScreen() {
         )}
 
         {difficult.map(({ word, misses, last }) => (
-          <ThemedView key={word.id} type="backgroundElement" style={styles.card}>
+          <ThemedView key={word.id} type="backgroundElement" style={[styles.card, styles.wordCard]}>
             <View style={styles.row}>
-              <ThemedText type="smallBold">{last.question.prompt}</ThemedText>
+              <ThemedText style={styles.word}>{last.question.prompt}</ThemedText>
               {rounds.length > 1 && (
                 <ThemedText type="small" themeColor="textSecondary">
                   {t.summary.misses(misses)}
@@ -105,7 +108,7 @@ export default function SummaryScreen() {
         <Button title={t.summary.newQuiz} variant="secondary" onPress={() => router.replace('/quiz/setup')} />
         <Button title={t.summary.wordList} variant="secondary" onPress={() => router.dismissTo('/')} />
       </ScrollView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 
@@ -125,9 +128,19 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     gap: Spacing.one,
   },
+  wordCard: {
+    gap: Spacing.two,
+  },
+  word: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: 700,
+    flexShrink: 1,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: Spacing.two,
   },
 });

@@ -1,10 +1,11 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Field } from '@/components/field';
 import { ThemedText } from '@/components/themed-text';
+import { ScreenBackground } from '@/components/screen-background';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import type { UiLanguageCode } from '@/i18n';
@@ -13,7 +14,9 @@ import { useAuth } from '@/lib/auth';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
 import { useSettings } from '@/lib/settings';
 import { useSpeechInput } from '@/lib/speech';
-import { addWord, getWord, updateWord, type WordInput } from '@/lib/words';
+import { addWord, countWords, deleteWord, getWord, updateWord, type WordInput } from '@/lib/words';
+
+const BACKGROUND = require('@/assets/images/backgrounds/bg-add.jpg');
 
 type VoiceTarget = 'word' | 'context';
 
@@ -45,6 +48,10 @@ export default function AddWordScreen() {
   const [suggesting, setSuggesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const wordLimit = settings.plan.wordLimit;
+  const [wordCount, setWordCount] = useState<number | null>(null);
+  // The free plan caps how many words can be saved; editing an existing word is always allowed.
+  const limitReached = !id && wordLimit !== null && wordCount !== null && wordCount >= wordLimit;
 
   // Editing: load the existing word once.
   useEffect(() => {
@@ -59,6 +66,13 @@ export default function AddWordScreen() {
       setPartOfSpeech(existing.partOfSpeech);
       setDefinition(existing.definition);
     });
+  }, [user, id]);
+
+  useEffect(() => {
+    if (!user || id) return;
+    countWords(user.uid)
+      .then(setWordCount)
+      .catch(() => {});
   }, [user, id]);
 
   async function dictate(field: VoiceTarget) {
@@ -105,6 +119,11 @@ export default function AddWordScreen() {
     setSaving(true);
     setError(null);
     try {
+      if (!id && wordLimit !== null) {
+        const count = await countWords(user.uid);
+        setWordCount(count);
+        if (count >= wordLimit) return;
+      }
       let input: WordInput = {
         word: word.trim(),
         nativeLang,
@@ -127,11 +146,36 @@ export default function AddWordScreen() {
     }
   }
 
+  function confirmDelete() {
+    if (!user || !id) return;
+    Alert.alert(t.words.deleteTitle, word, [
+      { text: t.common.cancel, style: 'cancel' },
+      {
+        text: t.common.delete,
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteWord(user.uid, id);
+            router.back();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+          }
+        },
+      },
+    ]);
+  }
+
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <Stack.Screen options={{ title: `${language.flag} ${id ? t.titles.editWord : t.titles.addWord}` }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {limitReached && wordLimit !== null && (
+            <ThemedView type="backgroundElement" style={styles.info}>
+              <ThemedText type="small">{t.plans.limitReached(wordLimit)}</ThemedText>
+              <Button title={t.plans.upgrade} onPress={() => router.push('/settings')} />
+            </ThemedView>
+          )}
           <Field
             label={t.add.word(t.languageNames[lang])}
             value={target === 'word' && speech.listening ? speech.partial : word}
@@ -178,10 +222,16 @@ export default function AddWordScreen() {
               {error ?? speech.error}
             </ThemedText>
           )}
-          <Button title={t.common.save} onPress={save} loading={saving} disabled={!word.trim() || suggesting} />
+          <Button
+            title={t.common.save}
+            onPress={save}
+            loading={saving}
+            disabled={!word.trim() || suggesting || limitReached}
+          />
+          {!!id && <Button title={t.common.delete} variant="danger" onPress={confirmDelete} disabled={saving} />}
         </ScrollView>
       </KeyboardAvoidingView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 

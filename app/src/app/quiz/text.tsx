@@ -6,11 +6,13 @@ import { Button } from '@/components/button';
 import { QuestionCard } from '@/components/question-card';
 import { RoundBreakCard } from '@/components/round-break-card';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { useQuiz } from '@/hooks/use-quiz';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/lib/settings';
+
+const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-text.jpg');
 
 const ROUND_BREAK_MS = 2500;
 
@@ -32,19 +34,19 @@ export default function TextQuizScreen() {
 
   if (roundBreak) {
     return (
-      <ThemedView style={[styles.container, styles.content]}>
+      <ScreenBackground source={BACKGROUND} style={[styles.container, styles.content]}>
         <RoundBreakCard roundBreak={roundBreak} />
         <Button title={t.common.next} onPress={continueToNextRound} />
-      </ThemedView>
+      </ScreenBackground>
     );
   }
 
   if (!quiz.question) {
     return (
-      <ThemedView style={[styles.container, styles.content]}>
+      <ScreenBackground source={BACKGROUND} style={[styles.container, styles.content]}>
         <ThemedText>{t.quiz.noQuiz}</ThemedText>
         <Button title={t.common.back} onPress={() => router.replace('/')} />
-      </ThemedView>
+      </ScreenBackground>
     );
   }
 
@@ -55,7 +57,7 @@ export default function TextQuizScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <QuestionCard
@@ -91,7 +93,7 @@ export default function TextQuizScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 

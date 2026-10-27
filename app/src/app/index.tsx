@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
+import { ScreenBackground } from '@/components/screen-background';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -12,6 +13,8 @@ import { useAuth } from '@/lib/auth';
 import { formatDayHeader } from '@/lib/dates';
 import { useSettings } from '@/lib/settings';
 import { deleteWord, MAX_BOX, subscribeWords, type Word } from '@/lib/words';
+
+const BACKGROUND = require('@/assets/images/backgrounds/bg-home.jpg');
 
 export default function WordsScreen() {
   const { user } = useAuth();
@@ -56,7 +59,7 @@ export default function WordsScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <Stack.Screen
         options={{
           title: `${language.flag} ${t.titles.words}`,
@@ -125,7 +128,7 @@ export default function WordsScreen() {
           />
         </View>
       </SafeAreaView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
   card: {
     padding: Spacing.three,
     borderRadius: Spacing.three,
-    gap: Spacing.one,
+    gap: Spacing.two,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -175,7 +178,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   word: {
-    fontSize: 17,
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: 700,
     flexShrink: 1,
   },
   actions: {
@@ -185,5 +190,7 @@ const styles = StyleSheet.create({
   },
   action: {
     flex: 1,
+    borderWidth: 2.5,
+    borderColor: '#ffffff',
   },
 });

@@ -61,6 +61,9 @@ export const Fonts = Platform.select({
   },
 });
 
+/** Outline around every button, so they stand out on the screen backgrounds. */
+export const ButtonBorder = { borderWidth: 1.5, borderColor: '#ffffff' } as const;
+
 export const Spacing = {
   half: 2,
   one: 4,

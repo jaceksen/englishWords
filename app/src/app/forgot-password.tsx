@@ -5,10 +5,12 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-na
 import { Button } from '@/components/button';
 import { Field } from '@/components/field';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { authErrorMessage, useAuth } from '@/lib/auth';
 import { useT } from '@/lib/settings';
+
+const BACKGROUND = require('@/assets/images/backgrounds/bg-forgot-password.jpg');
 
 export default function ForgotPasswordScreen() {
   const params = useLocalSearchParams<{ email?: string }>();
@@ -33,7 +35,7 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {sentTo ? (
@@ -68,7 +70,7 @@ export default function ForgotPasswordScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 

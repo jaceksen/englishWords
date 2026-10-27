@@ -6,10 +6,12 @@ import { Button } from '@/components/button';
 import { Field } from '@/components/field';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { authErrorMessage, useAuth } from '@/lib/auth';
 import { useT } from '@/lib/settings';
+
+const BACKGROUND = require('@/assets/images/backgrounds/bg-register.jpg');
 
 // Firebase Auth's own minimum; the form checks it up front for a clearer message.
 const MIN_PASSWORD_LENGTH = 6;
@@ -44,7 +46,7 @@ export default function RegisterScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ScreenBackground source={BACKGROUND} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Field
@@ -92,7 +94,7 @@ export default function RegisterScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ThemedView>
+    </ScreenBackground>
   );
 }
 

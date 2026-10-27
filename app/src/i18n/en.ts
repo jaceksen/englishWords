@@ -182,6 +182,19 @@ const en: Translations = {
     account: 'Account',
     signOut: 'Sign out',
   },
+  plans: {
+    title: 'Plan',
+    free: 'Free',
+    proMonthly: 'Pro – monthly',
+    proLifetime: 'Pro – lifetime',
+    freeDetail: (limit) => `Up to ${limit} words`,
+    proMonthlyDetail: (price) => `${price} / month · unlimited words`,
+    proLifetimeDetail: (price) => `${price} one-time · unlimited words`,
+    usage: (count, limit) => `Saved words: ${count} / ${limit}`,
+    unlimited: (count) => `Saved words: ${count} · no limit`,
+    limitReached: (limit) => `The free plan lets you save up to ${limit} words. Upgrade to Pro for unlimited words.`,
+    upgrade: 'See Pro plans',
+  },
 };
 
 export default en;

@@ -183,6 +183,20 @@ const de: Translations = {
     account: 'Konto',
     signOut: 'Abmelden',
   },
+  plans: {
+    title: 'Tarif',
+    free: 'Kostenlos',
+    proMonthly: 'Pro – monatlich',
+    proLifetime: 'Pro – lebenslang',
+    freeDetail: (limit) => `Bis zu ${limit} Wörter`,
+    proMonthlyDetail: (price) => `${price} / Monat · unbegrenzt Wörter`,
+    proLifetimeDetail: (price) => `${price} einmalig · unbegrenzt Wörter`,
+    usage: (count, limit) => `Gespeicherte Wörter: ${count} / ${limit}`,
+    unlimited: (count) => `Gespeicherte Wörter: ${count} · ohne Limit`,
+    limitReached: (limit) =>
+      `Im kostenlosen Tarif kannst du bis zu ${limit} Wörter speichern. Wechsle zu Pro für unbegrenzt viele Wörter.`,
+    upgrade: 'Pro-Tarife ansehen',
+  },
 };
 
 export default de;
