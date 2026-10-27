@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "954435657764",
+    "project_id": "legalizacjaonline",
+    "storage_bucket": "legalizacjaonline.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954435657764:android:38fcf4f2312aac7458f8b1",
+        "android_client_info": {
+          "package_name": "com.jacek.englishwords"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "954435657764-4kkrp2d41edv06ecmon21sk9b35ildir.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jacek.englishwords",
+            "certificate_hash": "0f073f38f18358eaa0a5de92fcab3e976174cfb9"
+          }
+        },
+        {
+          "client_id": "954435657764-gqmf907b2k9iu3sb352rhjug8ahfmrn6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jacek.englishwords",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "954435657764-ibdndbhfs7rvkk0lbv34v2hr2m74t82g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jacek.englishwords",
+            "certificate_hash": "1146331a80bca7f7168f8835e18801667f4523dc"
+          }
+        },
+        {
+          "client_id": "954435657764-aiufv0dd7u2b9dbhjgu9u3peckaph5p7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAr-WQut8_15pzaLS3KRmYv8rcqidsVbfU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "954435657764-aiufv0dd7u2b9dbhjgu9u3peckaph5p7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
