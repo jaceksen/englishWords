@@ -1,8 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet } from 'react-native';
 
-import { Button } from '@/components/button';
 import { Chips } from '@/components/chips';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
@@ -21,6 +20,7 @@ import { useSettings } from '@/lib/settings';
 import { fetchWords, type Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-setup.jpg');
+const START_BUTTON = require('@/assets/images/start-button.png');
 
 const COUNTS = [5, 10, 20, 0] as const; // 0 = all
 
@@ -56,6 +56,18 @@ export default function QuizSetupScreen() {
   return (
     <ScreenBackground source={BACKGROUND} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t.setup.start}
+          accessibilityState={{ disabled: !words?.length }}
+          disabled={!words?.length}
+          onPress={start}
+          style={({ pressed }) => [
+            styles.start,
+            { opacity: words?.length ? 1 : 0.4, transform: [{ scale: pressed ? 0.92 : 1 }] },
+          ]}>
+          <Image source={START_BUTTON} style={styles.startImage} />
+        </Pressable>
         <Chips
           label={t.setup.range}
           value={range}
@@ -105,7 +117,6 @@ export default function QuizSetupScreen() {
             {error}
           </ThemedText>
         )}
-        <Button title={t.setup.start} onPress={start} disabled={!words?.length} />
       </ScrollView>
     </ScreenBackground>
   );
@@ -118,6 +129,13 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.four,
+  },
+  start: {
+    alignSelf: 'center',
+  },
+  startImage: {
+    width: 128,
+    height: 128,
   },
   center: {
     textAlign: 'center',

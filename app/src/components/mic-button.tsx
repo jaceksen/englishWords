@@ -1,9 +1,11 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { Image, Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ButtonBorder } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/lib/settings';
+
+const STOP_BUTTON = require('@/assets/images/stop-button.png');
 
 type MicButtonProps = {
   listening: boolean;
@@ -23,15 +25,15 @@ export function MicButton({ listening, onPress, size = 48, disabled }: MicButton
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: listening ? theme.danger : theme.primary,
-          opacity: disabled ? 0.5 : pressed ? 0.8 : 1,
-        },
+        { width: size, height: size, borderRadius: size / 2, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 },
+        // The stop graphic brings its own round face and rim.
+        listening ? { transform: [{ scale: pressed ? 0.92 : 1 }] } : [styles.mic, { backgroundColor: theme.primary }],
       ]}>
-      <ThemedText style={{ fontSize: size * 0.45, lineHeight: size * 0.6 }}>{listening ? '■' : '🎤'}</ThemedText>
+      {listening ? (
+        <Image source={STOP_BUTTON} style={{ width: size, height: size }} />
+      ) : (
+        <ThemedText style={{ fontSize: size * 0.45, lineHeight: size * 0.6 }}>🎤</ThemedText>
+      )}
     </Pressable>
   );
 }
@@ -40,6 +42,8 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  mic: {
     ...ButtonBorder,
   },
 });
