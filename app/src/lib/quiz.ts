@@ -38,6 +38,7 @@ export type QuizSession = {
   direction: DirectionChoice;
   /** Questions per round. */
   count: number;
+  /** Infinity: endless, round after round until the user ends the quiz. */
   rounds: number;
   /** All words in the selected range; later rounds draw fresh words from here. */
   pool: Word[];
@@ -49,7 +50,7 @@ export type QuizSession = {
   completedRounds: QuizResult[][];
 };
 
-export const ROUND_OPTIONS = [1, 2, 3, 5] as const;
+export const ROUND_OPTIONS = [1, 2, 3, 5, Infinity];
 
 const BLANK = '____';
 

@@ -91,6 +91,10 @@ export default function TextQuizScreen() {
           ) : (
             <Button title={t.quiz.check} onPress={() => quiz.submit(answer)} loading={quiz.grading} />
           )}
+          {/* An endless quiz has no last question, so it needs a way out. */}
+          {!Number.isFinite(quiz.rounds) && (
+            <Button title={t.voice.end} variant="danger" onPress={() => router.replace('/quiz/summary')} />
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenBackground>

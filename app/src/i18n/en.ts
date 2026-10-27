@@ -123,6 +123,7 @@ const en: Translations = {
     rounds: 'Repetitions',
     noRepeat: 'No repeats',
     roundsHint: "Each next round includes the previous round's mistakes, topped up with new words from the selected range.",
+    endlessHint: '∞ – the quiz keeps going round after round until you end it with "End quiz".',
     wordsInRange: (count) => `Words in the selected range: ${count}`,
     start: 'Start',
   },
@@ -132,7 +133,7 @@ const en: Translations = {
     instructionTranslate: 'Give the meaning',
     instructionRecall: (inLanguage) => `Give the word ${inLanguage}`,
     instructionCloze: 'Fill the gap',
-    round: (round, rounds) => `Round ${round}/${rounds}`,
+    round: (round, rounds) => `Round ${round}${Number.isFinite(rounds) ? `/${rounds}` : ''}`,
     hint: (text) => `Hint: ${text}`,
     correct: '✓ Correct',
     wrong: '✗ Wrong',
@@ -142,7 +143,7 @@ const en: Translations = {
     noQuiz: 'No quiz in progress.',
     exactMatch: 'Correct!',
     noTranslation: '(no translation)',
-    roundDone: (round, rounds) => `Round ${round} / ${rounds} finished`,
+    roundDone: (round, rounds) => `Round ${round}${Number.isFinite(rounds) ? ` / ${rounds}` : ''} finished`,
     nextRoundSoon: (round) => `Round ${round} starts in a moment…`,
   },
   spoken: {
@@ -154,7 +155,7 @@ const en: Translations = {
     correct: 'Correct!',
     wrong: 'Not quite.',
     roundDone: (round, rounds, correct, total) =>
-      `Round ${round} of ${rounds} finished. Score: ${correct} out of ${total}. Starting round ${round + 1}.`,
+      `Round ${round}${Number.isFinite(rounds) ? ` of ${rounds}` : ''} finished. Score: ${correct} out of ${total}. Starting round ${round + 1}.`,
   },
   voice: {
     reading: 'Reading the question…',

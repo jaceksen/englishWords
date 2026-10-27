@@ -102,11 +102,14 @@ export default function QuizSetupScreen() {
           label={t.setup.rounds}
           value={rounds}
           onChange={setRounds}
-          options={ROUND_OPTIONS.map((value) => ({ value, label: value === 1 ? t.setup.noRepeat : `${value}×` }))}
+          options={ROUND_OPTIONS.map((value) => ({
+            value,
+            label: value === 1 ? t.setup.noRepeat : Number.isFinite(value) ? `${value}×` : '∞',
+          }))}
         />
         {rounds > 1 && (
           <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-            {t.setup.roundsHint}
+            {Number.isFinite(rounds) ? t.setup.roundsHint : t.setup.endlessHint}
           </ThemedText>
         )}
         <ThemedText themeColor="textSecondary" style={styles.center}>

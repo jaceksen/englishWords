@@ -123,6 +123,7 @@ const es: Translations = {
     rounds: 'Repeticiones',
     noRepeat: 'Sin repetir',
     roundsHint: 'Cada ronda incluye los errores de la anterior, completados con palabras nuevas del periodo elegido.',
+    endlessHint: '∞ – el quiz sigue ronda tras ronda hasta que lo termines con «Terminar test».',
     wordsInRange: (count) => `Palabras en el periodo elegido: ${count}`,
     start: 'Empezar',
   },
@@ -132,7 +133,7 @@ const es: Translations = {
     instructionTranslate: 'Di el significado',
     instructionRecall: (inLanguage) => `Di la palabra ${inLanguage}`,
     instructionCloze: 'Completa el hueco',
-    round: (round, rounds) => `Ronda ${round}/${rounds}`,
+    round: (round, rounds) => `Ronda ${round}${Number.isFinite(rounds) ? `/${rounds}` : ''}`,
     hint: (text) => `Pista: ${text}`,
     correct: '✓ Correcto',
     wrong: '✗ Incorrecto',
@@ -142,7 +143,7 @@ const es: Translations = {
     noQuiz: 'No hay ningún test en curso.',
     exactMatch: '¡Correcto!',
     noTranslation: '(sin traducción)',
-    roundDone: (round, rounds) => `Ronda ${round} / ${rounds} terminada`,
+    roundDone: (round, rounds) => `Ronda ${round}${Number.isFinite(rounds) ? ` / ${rounds}` : ''} terminada`,
     nextRoundSoon: (round) => `La ronda ${round} empieza enseguida…`,
   },
   spoken: {
@@ -154,7 +155,7 @@ const es: Translations = {
     correct: '¡Correcto!',
     wrong: 'No es correcto.',
     roundDone: (round, rounds, correct, total) =>
-      `Ronda ${round} de ${rounds} terminada. Resultado: ${correct} de ${total}. Empezamos la ronda ${round + 1}.`,
+      `Ronda ${round}${Number.isFinite(rounds) ? ` de ${rounds}` : ''} terminada. Resultado: ${correct} de ${total}. Empezamos la ronda ${round + 1}.`,
   },
   voice: {
     reading: 'Leyendo la pregunta…',

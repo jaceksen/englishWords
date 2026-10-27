@@ -123,6 +123,7 @@ const ru: Translations = {
     rounds: 'Повторения',
     noRepeat: 'Без повторов',
     roundsHint: 'Каждый следующий раунд включает ошибки предыдущего и новые слова из выбранного периода.',
+    endlessHint: '∞ – тест повторяется раунд за раундом, пока вы не завершите его кнопкой «Завершить тест».',
     wordsInRange: (count) => `Слов в выбранном периоде: ${count}`,
     start: 'Начать',
   },
@@ -132,7 +133,7 @@ const ru: Translations = {
     instructionTranslate: 'Назовите значение',
     instructionRecall: (inLanguage) => `Назовите слово ${inLanguage}`,
     instructionCloze: 'Заполните пропуск',
-    round: (round, rounds) => `Раунд ${round}/${rounds}`,
+    round: (round, rounds) => `Раунд ${round}${Number.isFinite(rounds) ? `/${rounds}` : ''}`,
     hint: (text) => `Подсказка: ${text}`,
     correct: '✓ Верно',
     wrong: '✗ Неверно',
@@ -142,7 +143,7 @@ const ru: Translations = {
     noQuiz: 'Нет активного теста.',
     exactMatch: 'Верно!',
     noTranslation: '(нет перевода)',
-    roundDone: (round, rounds) => `Раунд ${round} / ${rounds} завершён`,
+    roundDone: (round, rounds) => `Раунд ${round}${Number.isFinite(rounds) ? ` / ${rounds}` : ''} завершён`,
     nextRoundSoon: (round) => `Скоро раунд ${round}…`,
   },
   spoken: {
@@ -154,7 +155,7 @@ const ru: Translations = {
     correct: 'Верно!',
     wrong: 'К сожалению, нет.',
     roundDone: (round, rounds, correct, total) =>
-      `Раунд ${round} из ${rounds} завершён. Результат: ${correct} из ${total}. Начинаем раунд ${round + 1}.`,
+      `Раунд ${round}${Number.isFinite(rounds) ? ` из ${rounds}` : ''} завершён. Результат: ${correct} из ${total}. Начинаем раунд ${round + 1}.`,
   },
   voice: {
     reading: 'Читаю вопрос…',
