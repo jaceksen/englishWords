@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/button';
+import { ImageButton } from '@/components/image-button';
 import { MasteryBadge } from '@/components/mastery-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
@@ -16,6 +16,8 @@ import { useSettings } from '@/lib/settings';
 import { deleteWord, subscribeWords, type Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-home.jpg');
+const ADD_BUTTON = require('@/assets/images/add-word-button.png');
+const QUIZ_BUTTON = require('@/assets/images/quiz-button.png');
 
 export default function WordsScreen() {
   const { user } = useAuth();
@@ -79,6 +81,16 @@ export default function WordsScreen() {
           placeholderTextColor={theme.textSecondary}
           style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
+        <View style={styles.actions}>
+          <ImageButton source={ADD_BUTTON} label={t.titles.addWord} size={72} onPress={() => router.push('/add')} />
+          <ImageButton
+            source={QUIZ_BUTTON}
+            label={t.words.quiz}
+            size={72}
+            disabled={!words?.length}
+            onPress={() => router.push('/quiz/setup')}
+          />
+        </View>
         {error && <ThemedText themeColor="danger">{error}</ThemedText>}
         <SectionList
           sections={sections}
@@ -118,16 +130,6 @@ export default function WordsScreen() {
             </Pressable>
           )}
         />
-        <View style={styles.actions}>
-          <Button title={t.words.add} onPress={() => router.push('/add')} style={styles.action} />
-          <Button
-            title={t.words.quiz}
-            variant="secondary"
-            disabled={!words?.length}
-            onPress={() => router.push('/quiz/setup')}
-            style={styles.action}
-          />
-        </View>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -186,12 +188,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: Spacing.two,
-    paddingBottom: Spacing.two,
-  },
-  action: {
-    flex: 1,
-    borderWidth: 2.5,
-    borderColor: '#ffffff',
+    justifyContent: 'center',
+    gap: Spacing.three,
   },
 });

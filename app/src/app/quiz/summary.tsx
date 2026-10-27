@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/button';
+import { ImageButton } from '@/components/image-button';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
 import { ThemedView } from '@/components/themed-view';
@@ -11,6 +11,9 @@ import { useSettings } from '@/lib/settings';
 import type { Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-summary.jpg');
+const RETRY_BUTTON = require('@/assets/images/retry-button.png');
+const NEW_QUIZ_BUTTON = require('@/assets/images/new-quiz-button.png');
+const WORD_LIST_BUTTON = require('@/assets/images/word-list-button.png');
 
 type Difficult = { word: Word; misses: number; last: QuizResult };
 
@@ -104,9 +107,17 @@ export default function SummaryScreen() {
           </ThemedView>
         ))}
 
-        {difficult.length > 0 && <Button title={t.summary.retryWrong} onPress={retryDifficult} />}
-        <Button title={t.summary.newQuiz} variant="secondary" onPress={() => router.replace('/quiz/setup')} />
-        <Button title={t.summary.wordList} variant="secondary" onPress={() => router.dismissTo('/')} />
+        <View style={styles.actions}>
+          {difficult.length > 0 && (
+            <ImageButton source={RETRY_BUTTON} label={t.summary.retryWrong} onPress={retryDifficult} />
+          )}
+          <ImageButton
+            source={NEW_QUIZ_BUTTON}
+            label={t.summary.newQuiz}
+            onPress={() => router.replace('/quiz/setup')}
+          />
+          <ImageButton source={WORD_LIST_BUTTON} label={t.summary.wordList} onPress={() => router.dismissTo('/')} />
+        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -136,6 +147,12 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontWeight: 700,
     flexShrink: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.three,
+    paddingTop: Spacing.two,
   },
   row: {
     flexDirection: 'row',
