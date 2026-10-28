@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BusyModal } from '@/components/busy-modal';
 import { Button } from '@/components/button';
 import { LegalLinks } from '@/components/legal-links';
+import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
@@ -14,8 +15,10 @@ import { useAuth } from '@/lib/auth';
 import { buyPlan, manageBilling } from '@/lib/billing';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
 import { LEVELS } from '@/lib/levels';
-import { deviceCurrency, formatPrice, PLANS, type PlanCode } from '@/lib/plans';
+import { deviceCurrency, formatPrice, higherPlan, PLANS, type PaidPlanCode, type PlanCode } from '@/lib/plans';
+import { storeBillingEnabled } from '@/lib/revenuecat';
 import { useSettings } from '@/lib/settings';
+import { buyInStore, manageStoreSubscription, restoreStorePurchases, storePrices } from '@/lib/store-billing';
 import { countWords } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-settings.jpg');
@@ -82,16 +85,23 @@ export default function SettingsScreen() {
     planCode,
     plan,
     purchasedPlanCode,
+    storePlanCode,
     planGrant,
     hasLifetime,
   } = useSettings();
   // The same currency is shown here and charged by Stripe.
   const [currency] = useState(deviceCurrency);
   const [wordCount, setWordCount] = useState<number | null>(null);
+  // Google Play's prices, in the currency it will charge; empty until the store products are set up.
+  const [prices, setPrices] = useState<Partial<Record<PaidPlanCode, string>>>({});
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (storeBillingEnabled) storePrices().then(setPrices);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -119,7 +129,7 @@ export default function SettingsScreen() {
     ]);
   }
 
-  // Plans change only after Stripe confirms a payment; the new plan then arrives through useSettings.
+  // Plans change only after Stripe or Google Play confirms a payment; the new plan then arrives through useSettings.
   async function runBilling(action: () => Promise<void>) {
     setBillingBusy(true);
     setBillingError(null);
@@ -136,11 +146,28 @@ export default function SettingsScreen() {
     if (billingBusy || code === planCode) return;
     // Lifetime already covers monthly Pro.
     if (hasLifetime && code === 'pro_monthly') return;
+    if (storeBillingEnabled) chooseStorePlan(code);
     // Going back down means cancelling the subscription, which Stripe's portal does.
-    if (code === 'free' || (code === 'pro_lifetime' && hasLifetime)) {
+    else if (code === 'free' || (code === 'pro_lifetime' && hasLifetime)) {
       if (purchasedPlanCode !== 'free') runBilling(manageBilling);
     } else runBilling(() => buyPlan(code, currency));
   }
+
+  // The Google Play build sells only through Google Play; a plan bought on the portal is managed there.
+  function chooseStorePlan(code: PlanCode) {
+    if (!user) return;
+    if (purchasedPlanCode !== 'free') {
+      setBillingError(t.plans.managedOnWeb);
+    } else if (code === 'free' || (code === 'pro_lifetime' && hasLifetime)) {
+      if (storePlanCode !== 'free') manageStoreSubscription();
+    } else {
+      runBilling(async () => {
+        await buyInStore(user.uid, code);
+      });
+    }
+  }
+
+  const price = (code: PaidPlanCode) => prices[code] ?? formatPrice(code, currency, uiLanguage.locale);
 
   const planOptions: Option<PlanCode>[] = [
     { value: 'free', flag: PLANS.free.icon, label: t.plans.free, detail: t.plans.freeDetail(PLANS.free.wordLimit) },
@@ -148,19 +175,19 @@ export default function SettingsScreen() {
       value: 'pro_monthly',
       flag: PLANS.pro_monthly.icon,
       label: t.plans.proMonthly,
-      detail: t.plans.proMonthlyDetail(formatPrice('pro_monthly', currency, uiLanguage.locale)),
+      detail: t.plans.proMonthlyDetail(price('pro_monthly')),
     },
     {
       value: 'gold_monthly',
       flag: PLANS.gold_monthly.icon,
       label: t.plans.gold,
-      detail: t.plans.goldDetail(formatPrice('gold_monthly', currency, uiLanguage.locale)),
+      detail: t.plans.goldDetail(price('gold_monthly')),
     },
     {
       value: 'pro_lifetime',
       flag: PLANS.pro_lifetime.icon,
       label: t.plans.proLifetime,
-      detail: t.plans.proLifetimeDetail(formatPrice('pro_lifetime', currency, uiLanguage.locale)),
+      detail: t.plans.proLifetimeDetail(price('pro_lifetime')),
     },
   ];
 
@@ -203,7 +230,7 @@ export default function SettingsScreen() {
             </ThemedText>
           )}
           {/* Only when the grant, not a purchase, gives the current plan. */}
-          {planGrant && planCode !== purchasedPlanCode && (
+          {planGrant && planCode !== higherPlan(purchasedPlanCode, storePlanCode) && (
             <ThemedText type="small" themeColor="success">
               {t.plans.granted(
                 planGrant.plan === 'gold_monthly' ? t.plans.gold : 'Pro',
@@ -212,7 +239,7 @@ export default function SettingsScreen() {
             </ThemedText>
           )}
           <ThemedText type="small" themeColor="textSecondary">
-            {hasLifetime ? t.plans.lifetimeOwned : t.plans.choose}
+            {hasLifetime ? t.plans.lifetimeOwned : storeBillingEnabled ? t.plans.chooseStore : t.plans.choose}
           </ThemedText>
           <OptionPicker value={planCode} onChange={choosePlan} options={planOptions} />
           {billingBusy && (
@@ -225,13 +252,37 @@ export default function SettingsScreen() {
               {billingError}
             </ThemedText>
           )}
-          {purchasedPlanCode !== 'free' && (
-            <Button
-              title={t.plans.manage}
-              variant="secondary"
-              onPress={() => runBilling(manageBilling)}
-              disabled={billingBusy}
-            />
+          {storeBillingEnabled ? (
+            <>
+              {purchasedPlanCode !== 'free' && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t.plans.managedOnWeb}
+                </ThemedText>
+              )}
+              {storePlanCode !== 'free' && (
+                <Button title={t.plans.manageStore} variant="secondary" onPress={manageStoreSubscription} />
+              )}
+              <TextLink
+                title={t.plans.restore}
+                onPress={() => user && runBilling(() => restoreStorePurchases(user.uid))}
+              />
+            </>
+          ) : (
+            <>
+              {storePlanCode !== 'free' && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t.plans.managedInStore}
+                </ThemedText>
+              )}
+              {purchasedPlanCode !== 'free' && (
+                <Button
+                  title={t.plans.manage}
+                  variant="secondary"
+                  onPress={() => runBilling(manageBilling)}
+                  disabled={billingBusy}
+                />
+              )}
+            </>
           )}
         </View>
 

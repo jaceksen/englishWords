@@ -30,9 +30,14 @@ async function freePlanGrant(email: string | undefined) {
   }
 }
 
-/** The plan in effect: the higher of the purchased one (users/{uid}.plan) and a valid admin grant. */
+const higher = (a: string, b: string | null | undefined) => (b && (PLAN_RANK[b] ?? 0) > (PLAN_RANK[a] ?? 0) ? b : a);
+
+/**
+ * The plan in effect: the highest of the one bought through Stripe (users/{uid}.plan), through Google Play
+ * (users/{uid}.store.plan, functions/src/revenuecat.ts) and a valid admin grant.
+ */
 export async function effectivePlan(uid: string, email: string | undefined) {
   const [user, granted] = await Promise.all([getFirestore().doc(`users/${uid}`).get(), freePlanGrant(email)]);
   const purchased = (user.get('plan') as string | undefined) ?? 'free';
-  return granted && (PLAN_RANK[granted] ?? 0) > (PLAN_RANK[purchased] ?? 0) ? granted : purchased;
+  return higher(higher(purchased, user.get('store.plan') as string | undefined), granted);
 }

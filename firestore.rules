@@ -19,13 +19,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // The plan and Stripe ids are written only by Cloud Functions after a payment.
+    // The plan, Stripe ids and the Google Play plan (store) are written only by Cloud Functions after a payment.
     match /users/{uid} {
       allow read, delete: if isOwner(uid);
       allow create: if isOwner(uid)
-        && !request.resource.data.keys().hasAny(['plan', 'planUpdatedAt', 'stripe']);
+        && !request.resource.data.keys().hasAny(['plan', 'planUpdatedAt', 'stripe', 'store']);
       allow update: if isOwner(uid)
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'planUpdatedAt', 'stripe']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'planUpdatedAt', 'stripe', 'store']);
     }
   }
 }

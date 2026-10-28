@@ -14,6 +14,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 import type { Translations } from '@/i18n';
 import { auth, db } from '@/lib/firebase';
+import { syncStoreUser } from '@/lib/revenuecat';
 
 // OAuth client of type "web" (client_type 3) from google-services.json, required to get an idToken.
 GoogleSignin.configure({
@@ -61,6 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(
     () =>
       onAuthStateChanged(auth, (nextUser) => {
+        // Google Play purchases must be credited to the signed-in account.
+        void syncStoreUser(nextUser?.uid ?? null);
         setUser(nextUser);
         setInitializing(false);
       }),

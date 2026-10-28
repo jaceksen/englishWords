@@ -39,11 +39,13 @@ type SettingsState = {
   /** The learner's CEFR level, for choosing words to import from photos and texts. */
   level: Level;
   setLevel: (level: Level) => Promise<void>;
-  /** The plan in effect: the higher of the purchased one and an admin grant. */
+  /** The plan in effect: the highest of the Stripe one, the Google Play one and an admin grant. */
   planCode: PlanCode;
   plan: Plan;
   /** Bought through Stripe; what payments and the subscription portal are about. */
   purchasedPlanCode: PlanCode;
+  /** Bought in the Android app through Google Play (users/{uid}.store); managed in Google Play. */
+  storePlanCode: PlanCode;
   /** Plan given for free by the admin (freeplans/{email}), while valid. */
   planGrant: PlanGrant | null;
   /** Lifetime Pro was bought; it stays under a Gold subscription and comes back when that ends. */
@@ -63,16 +65,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [uiLanguageCode, setUiLanguageCode] = useState<UiLanguageCode>(deviceUiLanguage);
   const [level, setLevelState] = useState<Level>(DEFAULT_LEVEL);
   const [purchasedPlanCode, setPurchasedPlanCode] = useState<PlanCode>(DEFAULT_PLAN);
+  const [storePlanCode, setStorePlanCode] = useState<PlanCode>(DEFAULT_PLAN);
   const [lifetimeBought, setLifetimeBought] = useState(false);
   const [planGrant, setPlanGrant] = useState<PlanGrant | null>(null);
-  const planCode = higherPlan(purchasedPlanCode, planGrant?.plan ?? DEFAULT_PLAN);
+  const planCode = higherPlan(higherPlan(purchasedPlanCode, storePlanCode), planGrant?.plan ?? DEFAULT_PLAN);
 
   useEffect(() => {
     if (!user) return;
     return onSnapshot(doc(db, 'users', user.uid), (snap) => {
       const data = snap.data();
       setPurchasedPlanCode(isPlanCode(data?.plan) ? data.plan : DEFAULT_PLAN);
-      setLifetimeBought(data?.stripe?.lifetime === true);
+      setStorePlanCode(isPlanCode(data?.store?.plan) ? data.store.plan : DEFAULT_PLAN);
+      setLifetimeBought(data?.stripe?.lifetime === true || data?.store?.lifetime === true);
       const settings = data?.settings;
       setLanguageCodeState(isLanguageCode(settings?.language) ? settings.language : DEFAULT_LANGUAGE);
       if (isUiLanguageCode(settings?.uiLanguage)) setUiLanguageCode(settings.uiLanguage);
@@ -133,6 +137,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         planCode,
         plan: PLANS[planCode],
         purchasedPlanCode,
+        storePlanCode,
         planGrant,
         hasLifetime: lifetimeBought || purchasedPlanCode === 'pro_lifetime',
         t: getTranslations(uiLanguageCode),
