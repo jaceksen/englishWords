@@ -244,7 +244,7 @@ const pl = {
     gold: 'Gold',
     freeDetail: (limit: number) => `Do ${limit} słówek`,
     proMonthlyDetail: (price: string) => `${price} / miesiąc · bez limitu słówek · głos generowany przez telefon · import słówek z pliku, zdjęć i tekstu`,
-    goldDetail: (price: string) => `${price} / miesiąc · bez limitu słówek · naturalne głosy Google · import słówek z pliku, zdjęć i tekstu`,
+    goldDetail: (price: string) => `${price} / miesiąc · bez limitu słówek · naturalne głosy Google · import słówek z dokładniejszym rozpoznawaniem AI`,
     proLifetimeDetail: (price: string) => `${price} jednorazowo · bez limitu słówek · głos generowany przez telefon · import słówek z pliku, zdjęć i tekstu`,
     usage: (count: number, limit: number) => `Zapisane słówka: ${count} / ${limit}`,
     unlimited: (count: number) => `Zapisane słówka: ${count} · bez limitu`,

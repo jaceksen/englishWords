@@ -42,9 +42,11 @@ function hasLifetime(user: FirebaseFirestore.DocumentSnapshot) {
 // Currency options set on both Stripe prices; the app shows the price in the one it sends.
 const CURRENCIES = ['usd', 'pln', 'eur'];
 
-// Where Stripe sends the browser back. The page hands over to the app through its URL scheme.
+// Where Stripe sends the browser back. The page hands over to the app through its URL scheme, or to the web
+// portal (englishWordsWWW, Firebase Hosting site vocabsprint-app; localhost:5173 while developing it).
 const RETURN_PAGE = 'https://europe-central2-legalizacjaonline.cloudfunctions.net/billingReturn';
-const APP_RETURN_URL = /^(englishwords|exp\+english-words):\/\//;
+const APP_RETURN_URL =
+  /^(?:(?:englishwords|exp\+english-words):\/\/|https:\/\/vocabsprint-app\.(?:web\.app|firebaseapp\.com)\/|http:\/\/localhost:5173\/)/;
 
 let stripe: Stripe | undefined;
 function getStripe() {

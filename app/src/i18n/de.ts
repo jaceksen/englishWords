@@ -242,7 +242,7 @@ const de: Translations = {
     gold: 'Gold',
     freeDetail: (limit) => `Bis zu ${limit} Wörter`,
     proMonthlyDetail: (price) => `${price} / Monat · unbegrenzt Wörter · Stimme des Telefons · Wörter aus Dateien, Fotos und Texten importieren`,
-    goldDetail: (price) => `${price} / Monat · unbegrenzt Wörter · natürliche Google-Stimmen · Wörter aus Dateien, Fotos und Texten importieren`,
+    goldDetail: (price) => `${price} / Monat · unbegrenzt Wörter · natürliche Google-Stimmen · Wortimport mit genauerer KI-Erkennung`,
     proLifetimeDetail: (price) => `${price} einmalig · unbegrenzt Wörter · Stimme des Telefons · Wörter aus Dateien, Fotos und Texten importieren`,
     usage: (count, limit) => `Gespeicherte Wörter: ${count} / ${limit}`,
     unlimited: (count) => `Gespeicherte Wörter: ${count} · ohne Limit`,

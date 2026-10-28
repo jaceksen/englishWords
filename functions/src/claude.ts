@@ -8,8 +8,8 @@ import { z } from 'zod';
 export const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
 
 const MODEL = 'claude-haiku-5-5';
-/** Gold plan: reading words from photos and texts. */
-const PREMIUM_MODEL = 'claude-opus-5-5';
+/** Gold plan: reading words from photos and texts (Haiku misses underlined words too often). */
+const PREMIUM_MODEL = 'claude-sonnet-5-5';
 
 // Must match app/src/lib/languages.ts. `notes` are language-specific hints for the model.
 export const LANGUAGES = {

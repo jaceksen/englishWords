@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { BusyModal } from '@/components/busy-modal';
 import { Button } from '@/components/button';
 import { ScreenBackground } from '@/components/screen-background';
 import { ThemedText } from '@/components/themed-text';
@@ -172,18 +173,13 @@ export default function ImportScreen() {
           />
         </ThemedView>
 
-        {busy && (
-          <View style={styles.row}>
-            <ActivityIndicator />
-            <ThemedText type="small">{status}</ThemedText>
-          </View>
-        )}
         {error && (
           <ThemedText type="small" themeColor="danger">
             {error}
           </ThemedText>
         )}
       </ScrollView>
+      <BusyModal message={status} />
     </ScreenBackground>
   );
 }

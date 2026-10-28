@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput } from 'react-native';
 
+import { BusyModal } from '@/components/busy-modal';
 import { Button } from '@/components/button';
 import { ScreenBackground } from '@/components/screen-background';
 import { ThemedText } from '@/components/themed-text';
@@ -79,13 +80,9 @@ export default function ImportTextScreen() {
             </ThemedText>
           )}
           <Button title={t.import.findWords} onPress={findWords} loading={busy} disabled={!text.trim()} />
-          {busy && (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-              {t.import.analyzing}
-            </ThemedText>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
+      <BusyModal message={busy ? t.import.analyzing : null} />
     </ScreenBackground>
   );
 }
@@ -103,8 +100,5 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     padding: Spacing.three,
     fontSize: 16,
-  },
-  center: {
-    textAlign: 'center',
   },
 });
