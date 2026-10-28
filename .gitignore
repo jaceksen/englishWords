@@ -4,3 +4,5 @@ functions/.secret.local
 *.local
 firebase-debug.log
 .env
+
+.claude/settings.local.json

@@ -40,7 +40,8 @@ export function isUiLanguageCode(value: unknown): value is UiLanguageCode {
 /** The phone's language when the app supports it, otherwise English. */
 export function deviceUiLanguage(): UiLanguageCode {
   try {
-    const code = Intl.DateTimeFormat().resolvedOptions().locale.split('-')[0];
+    // e.g. "pl-PL"; some phones report "pl_PL" or an upper-case language.
+    const code = Intl.DateTimeFormat().resolvedOptions().locale.split(/[-_]/)[0].toLowerCase();
     return isUiLanguageCode(code) ? code : FALLBACK_UI_LANGUAGE;
   } catch {
     return FALLBACK_UI_LANGUAGE;

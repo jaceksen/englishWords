@@ -66,7 +66,14 @@
           }
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Aplikacja używa aparatu do robienia zdjęć tekstu, z którego importujesz słówka.",
+          "photosPermission": "Aplikacja otwiera zdjęcia tekstu, z których importujesz słówka."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

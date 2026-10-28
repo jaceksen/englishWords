@@ -27,6 +27,9 @@ function RootNavigator() {
         <Stack.Screen name="quiz/text" options={{ title: t.titles.textQuiz }} />
         <Stack.Screen name="quiz/voice" options={{ title: t.titles.voiceQuiz }} />
         <Stack.Screen name="quiz/summary" options={{ title: t.titles.summary, headerBackVisible: false }} />
+        <Stack.Screen name="import/index" options={{ title: t.titles.import }} />
+        <Stack.Screen name="import/text" options={{ title: t.titles.importText }} />
+        <Stack.Screen name="import/review" options={{ title: t.titles.importReview }} />
         <Stack.Screen name="settings" options={{ title: t.titles.settings }} />
         <Stack.Screen name="billing" options={{ headerShown: false, animation: 'none' }} />
       </Stack.Protected>

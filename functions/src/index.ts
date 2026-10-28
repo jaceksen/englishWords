@@ -1,127 +1,16 @@
 import './options.js';
 
-import Anthropic from '@anthropic-ai/sdk';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { defineSecret } from 'firebase-functions/params';
-import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/v2/https';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 
-const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
-
-const MODEL = 'claude-haiku-5-5';
-
-// Must match app/src/lib/languages.ts. `notes` are language-specific hints for the model.
-const LANGUAGES = {
-  en: { name: 'English', article: /^(?:the|an?|to)\s+/i, notes: '' },
-  ru: {
-    name: 'Russian',
-    article: null,
-    notes:
-      'Always write Russian in Cyrillic; if the learner typed it in Latin transliteration, convert it. ' +
-      'Treat "е" and "ё" as equivalent. Accept a different grammatical case or aspect only if the meaning is the same.',
-  },
-  es: {
-    name: 'Spanish',
-    article: /^(?:el|la|los|las|un|una)\s+/i,
-    notes:
-      'In the word field, always write nouns with their definite article, e.g. "el cuaderno", "la mesa". Accept answers without the article or with missing ' +
-      'accents (á, é, í, ó, ú, ñ) as correct, but mention the correct form in the feedback.',
-  },
-  de: {
-    name: 'German',
-    article: /^(?:der|die|das|ein|eine)\s+/i,
-    notes:
-      'In the word field, always write nouns capitalized with their definite article, e.g. "das Heft", "die Tür"; ' +
-      'fix capitalization in the context sentence. Ignore capitalization and accept ' +
-      '"ae/oe/ue/ss" for "ä/ö/ü/ß". Accept a noun without its article as correct, but mention the correct article in the feedback.',
-  },
-  fr: {
-    name: 'French',
-    article: /^(?:(?:le|la|les|un|une)\s+|l['’])/i,
-    notes:
-      "In the word field, always write nouns with their definite article, e.g. \"le cahier\", \"l'arbre\". Accept answers without the article or with missing " +
-      'accents (é, è, ê, à, ç…) as correct, but mention the correct form in the feedback.',
-  },
-} as const;
-type LanguageCode = keyof typeof LANGUAGES;
-
-// The learner's native language (the app language): translations go into it and feedback is written in it.
-// Must match app/src/i18n/index.ts. The short texts are for answers graded without the model.
-const NATIVE_LANGUAGES = {
-  pl: { name: 'Polish', correct: 'Dobrze!', noAnswer: 'Brak odpowiedzi. Poprawnie:' },
-  en: { name: 'English', correct: 'Correct!', noAnswer: 'No answer. Correct answer:' },
-  es: { name: 'Spanish', correct: '¡Correcto!', noAnswer: 'Sin respuesta. Respuesta correcta:' },
-  de: { name: 'German', correct: 'Richtig!', noAnswer: 'Keine Antwort. Richtig wäre:' },
-  fr: { name: 'French', correct: 'Correct !', noAnswer: 'Pas de réponse. Bonne réponse :' },
-  ru: { name: 'Russian', correct: 'Верно!', noAnswer: 'Нет ответа. Правильный ответ:' },
-} as const;
-type NativeLanguageCode = keyof typeof NATIVE_LANGUAGES;
-
-let client: Anthropic | undefined;
-function getClient() {
-  client ??= new Anthropic({ apiKey: anthropicApiKey.value() });
-  return client;
-}
-
-function requireAuth(request: CallableRequest) {
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'Sign in required.');
-  }
-}
-
-function requireString(value: unknown, field: string, maxLength: number): string {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new HttpsError('invalid-argument', `Field "${field}" is required.`);
-  }
-  if (value.length > maxLength) {
-    throw new HttpsError('invalid-argument', `Field "${field}" is too long.`);
-  }
-  return value.trim();
-}
-
-/** Older app versions did not send `lang`; they only supported English. */
-function requireLanguage(value: unknown) {
-  const code = value ?? 'en';
-  if (typeof code !== 'string' || !(code in LANGUAGES)) {
-    throw new HttpsError('invalid-argument', 'Unsupported language.');
-  }
-  return LANGUAGES[code as LanguageCode];
-}
-
-/** Older app versions did not send native/UI languages; they were Polish-only. */
-function requireNativeLanguage(value: unknown) {
-  const code = value ?? 'pl';
-  if (typeof code !== 'string' || !(code in NATIVE_LANGUAGES)) {
-    throw new HttpsError('invalid-argument', 'Unsupported native language.');
-  }
-  return NATIVE_LANGUAGES[code as NativeLanguageCode];
-}
-
-async function parseWithClaude<T extends z.ZodType>(system: string, prompt: string, schema: T) {
-  try {
-    const response = await getClient().messages.parse({
-      model: MODEL,
-      max_tokens: 2048,
-      output_config: { effort: 'low', format: zodOutputFormat(schema) },
-      system,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    if (response.stop_reason === 'refusal' || !response.parsed_output) {
-      throw new HttpsError('internal', 'The model did not return a valid answer.');
-    }
-    return response.parsed_output as z.infer<T>;
-  } catch (error) {
-    if (error instanceof HttpsError) throw error;
-    if (error instanceof Anthropic.RateLimitError) {
-      throw new HttpsError('resource-exhausted', 'Too many requests, try again shortly.');
-    }
-    if (error instanceof Anthropic.APIError) {
-      console.error('Claude API error', error.status, error.message);
-      throw new HttpsError('unavailable', 'The AI service is temporarily unavailable.');
-    }
-    throw error;
-  }
-}
+import {
+  anthropicApiKey,
+  parseWithClaude,
+  requireAuth,
+  requireLanguage,
+  requireNativeLanguage,
+  requireString,
+} from './claude.js';
 
 // --- suggestWord ---------------------------------------------------------------
 
@@ -259,4 +148,5 @@ export const checkAnswer = onCall({ secrets: [anthropicApiKey] }, async (request
 });
 
 export * from './billing.js';
+export * from './import.js';
 export * from './tts.js';

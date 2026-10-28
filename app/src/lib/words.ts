@@ -13,6 +13,7 @@ import {
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
 } from '@react-native-firebase/firestore';
 
 import { isUiLanguageCode, LEGACY_NATIVE_LANGUAGE, type UiLanguageCode } from '@/i18n';
@@ -111,6 +112,23 @@ export function addWord(uid: string, lang: LanguageCode, input: WordInput) {
     dayKey: dayKey(),
     stats: { asked: 0, correct: 0, box: 0, lastAskedAt: null },
   });
+}
+
+/** Many words at once (import); Firestore takes at most 500 writes per batch. */
+export async function addWords(uid: string, lang: LanguageCode, inputs: WordInput[]) {
+  for (let start = 0; start < inputs.length; start += 500) {
+    const batch = writeBatch(db);
+    for (const input of inputs.slice(start, start + 500)) {
+      batch.set(doc(wordsCollection(uid)), {
+        ...input,
+        lang,
+        createdAt: serverTimestamp(),
+        dayKey: dayKey(),
+        stats: { asked: 0, correct: 0, box: 0, lastAskedAt: null },
+      });
+    }
+    await batch.commit();
+  }
 }
 
 export function updateWord(uid: string, id: string, input: Partial<WordInput>) {

@@ -10,6 +10,7 @@ import { UI_LANGUAGES, type UiLanguageCode } from '@/i18n';
 import { useAuth } from '@/lib/auth';
 import { buyPlan, manageBilling } from '@/lib/billing';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
+import { LEVELS } from '@/lib/levels';
 import { deviceCurrency, formatPrice, PLANS, type PlanCode } from '@/lib/plans';
 import { useSettings } from '@/lib/settings';
 import { countWords } from '@/lib/words';
@@ -55,10 +56,32 @@ function OptionPicker<T extends string>({
   });
 }
 
+/** Section heading, in the blue of the constellations on the settings background. */
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <ThemedText accessibilityRole="header" style={styles.sectionTitle}>
+      {children}
+    </ThemedText>
+  );
+}
+
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
-  const { t, languageCode, setLanguage, uiLanguage, uiLanguageCode, setUiLanguage, planCode, plan, purchasedPlanCode, planGrant, hasLifetime } =
-    useSettings();
+  const {
+    t,
+    languageCode,
+    setLanguage,
+    uiLanguage,
+    uiLanguageCode,
+    setUiLanguage,
+    level,
+    setLevel,
+    planCode,
+    plan,
+    purchasedPlanCode,
+    planGrant,
+    hasLifetime,
+  } = useSettings();
   // The same currency is shown here and charged by Stripe.
   const [currency] = useState(deviceCurrency);
   const [wordCount, setWordCount] = useState<number | null>(null);
@@ -121,24 +144,7 @@ export default function SettingsScreen() {
     <ScreenBackground source={BACKGROUND} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.section}>
-          <ThemedText type="smallBold">{t.settings.appLanguage}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t.settings.appLanguageHint}
-          </ThemedText>
-          <OptionPicker
-            value={uiLanguageCode}
-            onChange={setUiLanguage}
-            // Each language under its own name, so it can be found whatever the current language is.
-            options={(Object.keys(UI_LANGUAGES) as UiLanguageCode[]).map((code) => ({
-              value: code,
-              flag: UI_LANGUAGES[code].flag,
-              label: UI_LANGUAGES[code].name,
-            }))}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText type="smallBold">{t.settings.learningLanguage}</ThemedText>
+          <SectionTitle>{t.settings.learningLanguage}</SectionTitle>
           <ThemedText type="small" themeColor="textSecondary">
             {t.settings.learningLanguageHint}
           </ThemedText>
@@ -154,7 +160,19 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="smallBold">{t.plans.title}</ThemedText>
+          <SectionTitle>{t.settings.level}</SectionTitle>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t.settings.levelHint}
+          </ThemedText>
+          <OptionPicker
+            value={level}
+            onChange={setLevel}
+            options={LEVELS.map((code) => ({ value: code, flag: code, label: t.levels[code] }))}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionTitle>{t.plans.title}</SectionTitle>
           {wordCount !== null && (
             <ThemedText type="small" themeColor="textSecondary">
               {plan.wordLimit === null ? t.plans.unlimited(wordCount) : t.plans.usage(wordCount, plan.wordLimit)}
@@ -194,7 +212,24 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="smallBold">{t.settings.account}</ThemedText>
+          <SectionTitle>{t.settings.appLanguage}</SectionTitle>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t.settings.appLanguageHint}
+          </ThemedText>
+          <OptionPicker
+            value={uiLanguageCode}
+            onChange={setUiLanguage}
+            // Each language under its own name, so it can be found whatever the current language is.
+            options={(Object.keys(UI_LANGUAGES) as UiLanguageCode[]).map((code) => ({
+              value: code,
+              flag: UI_LANGUAGES[code].flag,
+              label: UI_LANGUAGES[code].name,
+            }))}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionTitle>{t.settings.account}</SectionTitle>
           <ThemedText type="small" themeColor="textSecondary">
             {user?.email ?? user?.displayName ?? '—'}
           </ThemedText>
@@ -215,6 +250,18 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: Spacing.two,
+  },
+  sectionTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: 700,
+    textAlign: 'center',
+    color: '#8CCBFF',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.one,
+    textShadowColor: 'rgba(75, 163, 245, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
   option: {
     flexDirection: 'row',

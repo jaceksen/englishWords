@@ -3,13 +3,14 @@ export const FREE_WORD_LIMIT = 10;
 /**
  * Subscription plans, stored as users/{uid}.plan and switched by the Stripe webhook after a payment.
  * `wordLimit` counts words in all learning languages; null means unlimited. `naturalVoices` speaks with
- * Google Cloud voices instead of the phone's own.
+ * Google Cloud voices instead of the phone's own. `importWords` unlocks importing from files, photos and texts
+ * (also checked in functions/src/import.ts).
  */
 export const PLANS = {
-  free: { code: 'free', icon: '🌱', wordLimit: FREE_WORD_LIMIT, naturalVoices: false },
-  pro_monthly: { code: 'pro_monthly', icon: '⭐', wordLimit: null, naturalVoices: false },
-  gold_monthly: { code: 'gold_monthly', icon: '🥇', wordLimit: null, naturalVoices: true },
-  pro_lifetime: { code: 'pro_lifetime', icon: '♾️', wordLimit: null, naturalVoices: false },
+  free: { code: 'free', icon: '🌱', wordLimit: FREE_WORD_LIMIT, naturalVoices: false, importWords: false },
+  pro_monthly: { code: 'pro_monthly', icon: '⭐', wordLimit: null, naturalVoices: false, importWords: true },
+  gold_monthly: { code: 'gold_monthly', icon: '🥇', wordLimit: null, naturalVoices: true, importWords: true },
+  pro_lifetime: { code: 'pro_lifetime', icon: '♾️', wordLimit: null, naturalVoices: false, importWords: true },
 } as const;
 
 export type PlanCode = keyof typeof PLANS;

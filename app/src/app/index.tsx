@@ -67,9 +67,14 @@ export default function WordsScreen() {
         options={{
           title: `${language.flag} ${t.titles.words}`,
           headerRight: () => (
-            <Pressable onPress={() => router.push('/settings')} hitSlop={8} accessibilityLabel={t.words.settings}>
-              <ThemedText style={styles.headerIcon}>⚙️</ThemedText>
-            </Pressable>
+            <View style={styles.headerIcons}>
+              <Pressable onPress={() => router.push('/import')} hitSlop={8} accessibilityLabel={t.words.import}>
+                <ThemedText style={styles.headerIcon}>📥</ThemedText>
+              </Pressable>
+              <Pressable onPress={() => router.push('/settings')} hitSlop={8} accessibilityLabel={t.words.settings}>
+                <ThemedText style={styles.headerIcon}>⚙️</ThemedText>
+              </Pressable>
+            </View>
           ),
         }}
       />
@@ -147,6 +152,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
     gap: Spacing.two,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    gap: Spacing.three,
   },
   headerIcon: {
     fontSize: 22,

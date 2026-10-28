@@ -13,6 +13,7 @@ import {
 } from '@/i18n';
 import { useAuth } from '@/lib/auth';
 import { auth, db } from '@/lib/firebase';
+import { DEFAULT_LEVEL, isLevel, type Level } from '@/lib/levels';
 import { DEFAULT_LANGUAGE, isLanguageCode, LANGUAGES, type Language, type LanguageCode } from '@/lib/languages';
 import {
   DEFAULT_PLAN,
@@ -35,6 +36,9 @@ type SettingsState = {
   uiLanguageCode: UiLanguageCode;
   uiLanguage: UiLanguage;
   setUiLanguage: (code: UiLanguageCode) => Promise<void>;
+  /** The learner's CEFR level, for choosing words to import from photos and texts. */
+  level: Level;
+  setLevel: (level: Level) => Promise<void>;
   /** The plan in effect: the higher of the purchased one and an admin grant. */
   planCode: PlanCode;
   plan: Plan;
@@ -57,6 +61,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [languageCode, setLanguageCodeState] = useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [uiLanguageCode, setUiLanguageCode] = useState<UiLanguageCode>(deviceUiLanguage);
+  const [level, setLevelState] = useState<Level>(DEFAULT_LEVEL);
   const [purchasedPlanCode, setPurchasedPlanCode] = useState<PlanCode>(DEFAULT_PLAN);
   const [lifetimeBought, setLifetimeBought] = useState(false);
   const [planGrant, setPlanGrant] = useState<PlanGrant | null>(null);
@@ -71,6 +76,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const settings = data?.settings;
       setLanguageCodeState(isLanguageCode(settings?.language) ? settings.language : DEFAULT_LANGUAGE);
       if (isUiLanguageCode(settings?.uiLanguage)) setUiLanguageCode(settings.uiLanguage);
+      setLevelState(isLevel(settings?.level) ? settings.level : DEFAULT_LEVEL);
     });
   }, [user]);
 
@@ -108,6 +114,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     await save({ uiLanguage: code });
   }
 
+  async function setLevel(value: Level) {
+    setLevelState(value);
+    await save({ level: value });
+  }
+
   return (
     <SettingsContext
       value={{
@@ -117,6 +128,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         uiLanguageCode,
         uiLanguage: UI_LANGUAGES[uiLanguageCode],
         setUiLanguage,
+        level,
+        setLevel,
         planCode,
         plan: PLANS[planCode],
         purchasedPlanCode,
