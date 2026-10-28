@@ -242,7 +242,7 @@ const fr: Translations = {
     gold: 'Gold',
     freeDetail: (limit) => `Jusqu’à ${limit} mots`,
     proMonthlyDetail: (price) => `${price} / mois · mots illimités · voix générée par le téléphone · import de mots depuis fichiers, photos et textes`,
-    goldDetail: (price) => `${price} / mois · mots illimités · voix naturelles Google · import de mots avec la reconnaissance IA la plus précise`,
+    goldDetail: (price) => `${price} / mois · mots illimités · voix naturelles Google · import de mots depuis fichiers, photos et textes`,
     proLifetimeDetail: (price) => `${price} en une fois · mots illimités · voix générée par le téléphone · import de mots depuis fichiers, photos et textes`,
     usage: (count, limit) => `Mots enregistrés : ${count} / ${limit}`,
     unlimited: (count) => `Mots enregistrés : ${count} · sans limite`,

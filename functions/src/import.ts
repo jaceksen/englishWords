@@ -211,8 +211,7 @@ export const extractWords = onCall(IMPORT_OPTIONS, async (request): Promise<Extr
     throw new HttpsError('invalid-argument', 'Marked words need a photo.');
   }
   const known = new Set(stringList(request.data?.known, MAX_KNOWN, 100).map((w) => normalize(w, language)));
-  // Gold reads photos and texts with the stronger model.
-  const premium = (await requireImportAccess(request)) === 'gold_monthly';
+  await requireImportAccess(request);
 
   const source = image ? 'the photo' : 'the text';
   const task =
@@ -242,7 +241,7 @@ export const extractWords = onCall(IMPORT_OPTIONS, async (request): Promise<Extr
       wordInstructions(language, native.name),
     content,
     ExtractSchema,
-    { maxTokens: 12000, effort: image ? 'medium' : 'low', premium },
+    { maxTokens: 12000, effort: image ? 'medium' : 'low' },
   );
 
   const textLanguage = result.textLanguage.trim().toLowerCase().slice(0, 2);

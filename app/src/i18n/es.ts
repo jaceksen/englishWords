@@ -241,7 +241,7 @@ const es: Translations = {
     gold: 'Gold',
     freeDetail: (limit) => `Hasta ${limit} palabras`,
     proMonthlyDetail: (price) => `${price} / mes · palabras ilimitadas · voz generada por el teléfono · importar palabras de archivos, fotos y textos`,
-    goldDetail: (price) => `${price} / mes · palabras ilimitadas · voces naturales de Google · importación de palabras con el reconocimiento de IA más preciso`,
+    goldDetail: (price) => `${price} / mes · palabras ilimitadas · voces naturales de Google · importar palabras de archivos, fotos y textos`,
     proLifetimeDetail: (price) => `${price} pago único · palabras ilimitadas · voz generada por el teléfono · importar palabras de archivos, fotos y textos`,
     usage: (count, limit) => `Palabras guardadas: ${count} / ${limit}`,
     unlimited: (count) => `Palabras guardadas: ${count} · sin límite`,
