@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { BusyModal } from '@/components/busy-modal';
 import { Button } from '@/components/button';
+import { LegalLinks } from '@/components/legal-links';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { UI_LANGUAGES, type UiLanguageCode } from '@/i18n';
+import { deleteAccount } from '@/lib/account';
 import { useAuth } from '@/lib/auth';
 import { buyPlan, manageBilling } from '@/lib/billing';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
@@ -87,6 +90,8 @@ export default function SettingsScreen() {
   const [wordCount, setWordCount] = useState<number | null>(null);
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -94,6 +99,25 @@ export default function SettingsScreen() {
       .then(setWordCount)
       .catch(() => setWordCount(null));
   }, [user]);
+
+  async function removeAccount() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount();
+      await signOut();
+    } catch {
+      setDeleteError(t.settings.deleteError);
+      setDeleting(false);
+    }
+  }
+
+  function confirmDelete() {
+    Alert.alert(t.settings.deleteTitle, t.settings.deleteConfirm, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.settings.deleteAction, style: 'destructive', onPress: removeAccount },
+    ]);
+  }
 
   // Plans change only after Stripe confirms a payment; the new plan then arrives through useSettings.
   async function runBilling(action: () => Promise<void>) {
@@ -234,8 +258,16 @@ export default function SettingsScreen() {
             {user?.email ?? user?.displayName ?? '—'}
           </ThemedText>
           <Button title={t.settings.signOut} variant="secondary" onPress={signOut} />
+          <Button title={t.settings.deleteAccount} variant="danger" onPress={confirmDelete} disabled={deleting} />
+          {deleteError && (
+            <ThemedText type="small" themeColor="danger">
+              {deleteError}
+            </ThemedText>
+          )}
+          <LegalLinks />
         </View>
       </ScrollView>
+      <BusyModal message={deleting ? t.settings.deleting : null} />
     </ScreenBackground>
   );
 }

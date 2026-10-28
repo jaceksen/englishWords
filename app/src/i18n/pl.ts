@@ -193,6 +193,12 @@ const pl = {
     learningLanguageHint: 'Lista słówek, dodawanie i quiz dotyczą wybranego języka. Słówka z innych języków zostają zapisane.',
     account: 'Konto',
     signOut: 'Wyloguj',
+    deleteAccount: 'Usuń konto',
+    deleteTitle: 'Usunąć konto?',
+    deleteConfirm: 'Konto i wszystkie słówka zostaną trwale usunięte. Subskrypcja opłacana przez Stripe zostanie anulowana. Tej operacji nie można cofnąć.',
+    deleteAction: 'Usuń na zawsze',
+    deleting: 'Usuwam konto…',
+    deleteError: 'Nie udało się usunąć konta. Spróbuj ponownie.',
     level: 'Twój poziom',
     levelHint: 'Według niego AI wybiera słówka z importowanych zdjęć i tekstów.',
   },
@@ -235,6 +241,13 @@ const pl = {
     unsupportedFile: 'To nie jest plik Excel ani CSV. Wybierz plik .xlsx, .xls lub .csv.',
     readError: 'Nie udało się odczytać pliku lub zdjęcia.',
     wrongLanguage: (text: string, learning: string) => `Ten tekst jest w języku: ${text}, a uczysz się języka: ${learning}. Zmień język nauki w Ustawieniach.`,
+  },
+  /** Links to the legal pages on the web portal. */
+  legal: {
+    terms: 'Regulamin',
+    privacy: 'Polityka prywatności',
+    deleteAccount: 'Usuń konto',
+    registerNotice: 'Zakładając konto, akceptujesz Regulamin i Politykę prywatności.',
   },
   plans: {
     title: 'Plan',

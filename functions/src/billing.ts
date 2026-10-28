@@ -8,7 +8,7 @@ import Stripe from 'stripe';
 
 initializeApp();
 
-const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
+export const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 // Stripe ids (price_…, bpc_…), kept in functions/.env.
 const monthlyPrice = defineString('STRIPE_PRICE_MONTHLY');
@@ -46,10 +46,10 @@ const CURRENCIES = ['usd', 'pln', 'eur'];
 // portal (englishWordsWWW, Firebase Hosting site vocabsprint-app; localhost:5173 while developing it).
 const RETURN_PAGE = 'https://europe-central2-legalizacjaonline.cloudfunctions.net/billingReturn';
 const APP_RETURN_URL =
-  /^(?:(?:englishwords|exp\+english-words):\/\/|https:\/\/vocabsprint-app\.(?:web\.app|firebaseapp\.com)\/|http:\/\/localhost:5173\/)/;
+  /^(?:(?:englishwords|exp\+english-words):\/\/|https:\/\/(?:vocabsprint-app\.(?:web\.app|firebaseapp\.com)|(?:www\.)?vocabsprint\.com)\/|http:\/\/localhost:5173\/)/;
 
 let stripe: Stripe | undefined;
-function getStripe() {
+export function getStripe() {
   stripe ??= new Stripe(stripeSecretKey.value());
   return stripe;
 }
@@ -215,6 +215,8 @@ export const stripeWebhook = onRequest({ secrets: [stripeSecretKey, stripeWebhoo
       const uid = subscription.metadata?.uid;
       if (subscription.metadata?.app !== APP || !uid) break;
       const user = await db().doc(`users/${uid}`).get();
+      // The account was deleted (deleteAccount cancels its subscriptions); do not recreate it.
+      if (!user.exists) break;
       // Events of a subscription that was replaced by a newer one.
       if (user.get('stripe.subscriptionId') && user.get('stripe.subscriptionId') !== subscription.id) break;
       const active = event.type === 'customer.subscription.updated' && ACTIVE_STATUSES.includes(subscription.status);

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { Field } from '@/components/field';
+import { LegalLinks } from '@/components/legal-links';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -113,6 +114,7 @@ export default function LoginScreen() {
                 </ThemedText>
                 <TextLink title={t.login.createAccount} onPress={() => router.push('/register')} />
               </View>
+              <LegalLinks />
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

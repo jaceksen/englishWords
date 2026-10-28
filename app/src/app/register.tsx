@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 
 import { Button } from '@/components/button';
 import { Field } from '@/components/field';
+import { LegalLinks } from '@/components/legal-links';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
@@ -80,6 +81,9 @@ export default function RegisterScreen() {
               {error}
             </ThemedText>
           )}
+          <ThemedText type="small" themeColor="textSecondary" style={styles.notice}>
+            {t.legal.registerNotice}
+          </ThemedText>
           <Button
             title={t.register.submit}
             onPress={register}
@@ -92,6 +96,7 @@ export default function RegisterScreen() {
             </ThemedText>
             <TextLink title={t.register.signIn} onPress={() => router.back()} />
           </View>
+          <LegalLinks />
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenBackground>
@@ -105,6 +110,9 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.four,
     gap: Spacing.three,
+  },
+  notice: {
+    textAlign: 'center',
   },
   login: {
     flexDirection: 'row',
