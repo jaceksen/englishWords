@@ -12,6 +12,7 @@ import { Spacing } from '@/constants/theme';
 import { useQuiz } from '@/hooks/use-quiz';
 import { UI_LANGUAGES } from '@/i18n';
 import { LANGUAGES } from '@/lib/languages';
+import { useQuizOptions } from '@/lib/quiz-options';
 import { useSettings } from '@/lib/settings';
 import { speak, stopSpeaking, useSpeechInput } from '@/lib/speech';
 
@@ -23,7 +24,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function VoiceQuizScreen() {
   const quiz = useQuiz();
-  const { t, uiLanguage } = useSettings();
+  const { t, uiLanguage, plan } = useSettings();
+  const { example } = useQuizOptions();
   const speech = useSpeechInput({ noPermission: t.errors.noMicPermission });
   const [paused, setPaused] = useState(false);
   const [status, setStatus] = useState('');
@@ -83,6 +85,14 @@ export default function VoiceQuizScreen() {
             ? UI_LANGUAGES[question.word.nativeLang].speech
             : LANGUAGES[question.word.lang].speech,
         );
+      }
+      // Gold: the word's example sentence, after a wrong answer or after every one.
+      const context = question.word.context;
+      if (plan.examples && context && (example === 'all' || (example === 'wrong' && !result.correct))) {
+        if (cancelled()) return;
+        await speak(t.spoken.example, uiLanguage.speech);
+        if (cancelled()) return;
+        await speak(context, LANGUAGES[question.word.lang].speech);
       }
       await sleep(PAUSE_AFTER_RESULT_MS);
       if (cancelled()) return;

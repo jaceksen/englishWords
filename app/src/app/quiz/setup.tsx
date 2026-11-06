@@ -1,37 +1,24 @@
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
-import { Chips } from '@/components/chips';
 import { ThemedText } from '@/components/themed-text';
 import { ScreenBackground } from '@/components/screen-background';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
-import { RANGE_KEYS, type RangeKey } from '@/lib/dates';
-import {
-  createSession,
-  directionLabel,
-  ROUND_OPTIONS,
-  startSession,
-  type DirectionChoice,
-  type QuizMode,
-} from '@/lib/quiz';
+import { createSession, startSession } from '@/lib/quiz';
+import { useQuizOptions } from '@/lib/quiz-options';
 import { useSettings } from '@/lib/settings';
 import { fetchWords, type Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-setup.jpg');
 const START_BUTTON = require('@/assets/images/start-button.png');
 
-const COUNTS = [5, 10, 20, 0] as const; // 0 = all
-
+/** One big start button; the quiz settings live behind the gear in the header. */
 export default function QuizSetupScreen() {
   const { user } = useAuth();
   const { languageCode, language, uiLanguageCode, t } = useSettings();
-  const [range, setRange] = useState<RangeKey>('today');
-  const [direction, setDirection] = useState<DirectionChoice>('translate');
-  const [mode, setMode] = useState<QuizMode>('voice');
-  const [count, setCount] = useState<number>(10);
-  const [rounds, setRounds] = useState<number>(1);
+  const { range, direction, mode, count, rounds } = useQuizOptions();
   const [loaded, setLoaded] = useState<{ key: string; words: Word[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Words for a previously selected range or language are stale while the new ones load.
@@ -55,63 +42,28 @@ export default function QuizSetupScreen() {
 
   return (
     <ScreenBackground source={BACKGROUND} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Pressable onPress={() => router.push('/quiz/options')} hitSlop={8} accessibilityLabel={t.titles.quizOptions}>
+              <ThemedText style={styles.headerIcon}>⚙️</ThemedText>
+            </Pressable>
+          ),
+        }}
+      />
+      <View style={styles.content}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t.setup.start}
           accessibilityState={{ disabled: !words?.length }}
           disabled={!words?.length}
           onPress={start}
-          style={({ pressed }) => [
-            styles.start,
-            { opacity: words?.length ? 1 : 0.4, transform: [{ scale: pressed ? 0.92 : 1 }] },
-          ]}>
+          style={({ pressed }) => ({
+            opacity: words?.length ? 1 : 0.4,
+            transform: [{ scale: pressed ? 0.92 : 1 }],
+          })}>
           <Image source={START_BUTTON} style={styles.startImage} />
         </Pressable>
-        <Chips
-          label={t.setup.range}
-          value={range}
-          onChange={setRange}
-          options={RANGE_KEYS.map((value) => ({ value, label: t.ranges[value] }))}
-        />
-        <Chips
-          label={t.setup.direction}
-          value={direction}
-          onChange={setDirection}
-          options={(['translate', 'recall', 'cloze', 'mix'] as DirectionChoice[]).map((value) => ({
-            value,
-            label: directionLabel(value, language, uiLanguageCode, t),
-          }))}
-        />
-        <Chips
-          label={t.setup.mode}
-          value={mode}
-          onChange={setMode}
-          options={[
-            { value: 'text', label: t.setup.modeText },
-            { value: 'voice', label: t.setup.modeVoice },
-          ]}
-        />
-        <Chips
-          label={t.setup.count}
-          value={count}
-          onChange={setCount}
-          options={COUNTS.map((value) => ({ value, label: value ? String(value) : t.setup.countAll }))}
-        />
-        <Chips
-          label={t.setup.rounds}
-          value={rounds}
-          onChange={setRounds}
-          options={ROUND_OPTIONS.map((value) => ({
-            value,
-            label: value === 1 ? t.setup.noRepeat : Number.isFinite(value) ? `${value}×` : '∞',
-          }))}
-        />
-        {rounds > 1 && (
-          <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-            {Number.isFinite(rounds) ? t.setup.roundsHint : t.setup.endlessHint}
-          </ThemedText>
-        )}
         <ThemedText themeColor="textSecondary" style={styles.center}>
           {words === null ? t.common.loading : `${language.flag} ${t.setup.wordsInRange(words.length)}`}
         </ThemedText>
@@ -120,7 +72,7 @@ export default function QuizSetupScreen() {
             {error}
           </ThemedText>
         )}
-      </ScrollView>
+      </View>
     </ScreenBackground>
   );
 }
@@ -130,17 +82,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: Spacing.three,
     gap: Spacing.four,
   },
-  start: {
-    alignSelf: 'center',
-  },
   startImage: {
-    width: 128,
-    height: 128,
+    width: 220,
+    height: 220,
   },
   center: {
     textAlign: 'center',
+  },
+  headerIcon: {
+    fontSize: 22,
   },
 });

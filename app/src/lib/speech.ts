@@ -28,16 +28,20 @@ export function setVoice(value: typeof voice) {
 /** Ends the clip that is playing now, resolving its `speak()` promise. */
 let finishClip: (() => void) | null = null;
 
-/** Speaks `text` and resolves when finished (or stopped). */
-export async function speak(text: string, language: SpeechLang, rate = 0.95) {
+/**
+ * Speaks `text` and resolves when finished (or stopped). `onStart` fires when the sound begins, after a
+ * cloud clip has been fetched, so a caller can show that it is still waiting.
+ */
+export async function speak(text: string, language: SpeechLang, rate = 0.95, onStart?: () => void) {
   if (voice !== 'device') {
     try {
-      await playClip(await cloudClip(text, language, voice));
+      await playClip(await cloudClip(text, language, voice), onStart);
       return;
     } catch {
       // Offline or the service failed: the phone's voice is better than silence.
     }
   }
+  onStart?.();
   await speakOnDevice(text, language, rate);
 }
 
@@ -85,7 +89,7 @@ async function cloudClip(text: string, language: SpeechLang, quality: CloudVoice
   return file;
 }
 
-function playClip(file: File) {
+function playClip(file: File, onStart?: () => void) {
   return new Promise<void>((resolve) => {
     finishClip?.();
     const player = createAudioPlayer({ uri: file.uri });
@@ -103,6 +107,7 @@ function playClip(file: File) {
       resolve();
     }
     finishClip = finish;
+    onStart?.();
     player.play();
   });
 }

@@ -24,6 +24,7 @@ function RootNavigator() {
         <Stack.Screen name="index" options={{ title: t.titles.words }} />
         <Stack.Screen name="add" options={{ title: t.titles.addWord, presentation: 'modal' }} />
         <Stack.Screen name="quiz/setup" options={{ title: t.titles.quiz }} />
+        <Stack.Screen name="quiz/options" options={{ title: t.titles.quizOptions }} />
         <Stack.Screen name="quiz/text" options={{ title: t.titles.textQuiz }} />
         <Stack.Screen name="quiz/voice" options={{ title: t.titles.voiceQuiz }} />
         <Stack.Screen name="quiz/summary" options={{ title: t.titles.summary, headerBackVisible: false }} />

@@ -1,6 +1,6 @@
 import { router, Stack } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ImageButton } from '@/components/image-button';
@@ -18,7 +18,7 @@ import { deleteWord, subscribeWords, type Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-home.jpg');
 const ADD_BUTTON = require('@/assets/images/add-word-button.png');
-const QUIZ_BUTTON = require('@/assets/images/quiz-button.png');
+const QUIZ_BUTTON = require('@/assets/images/start-button.png');
 
 export default function WordsScreen() {
   const { user } = useAuth();
@@ -62,10 +62,20 @@ export default function WordsScreen() {
     ]);
   }
 
+  // What is waiting for its sound (a cloud voice can take a moment, mostly the first time): `${id}:word` or `${id}:context`.
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const sayRequest = useRef(0);
+
   /** Says a word or sentence in the learning language, cutting off whatever is playing. */
-  function say(text: string) {
+  function say(text: string, key: string) {
     stopSpeaking();
-    speak(text, language.speech);
+    const request = ++sayRequest.current;
+    // Only the latest tap clears the spinner; an older one finishing late must not hide it.
+    const done = () => {
+      if (sayRequest.current === request) setLoadingKey(null);
+    };
+    setLoadingKey(key);
+    speak(text, language.speech, undefined, done).finally(done);
   }
 
   return (
@@ -121,17 +131,19 @@ export default function WordsScreen() {
           )}
           renderItem={({ item }) => (
             <Pressable onLongPress={() => confirmDelete(item)}>
-              <ThemedView type="backgroundElement" style={styles.card}>
+              <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
                 <View style={styles.cardText}>
                   <Pressable
-                    onPress={() => say(item.word)}
+                    onPress={() => say(item.word, `${item.id}:word`)}
                     hitSlop={4}
                     accessibilityRole="button"
                     accessibilityLabel={`${t.words.speak}: ${item.word}`}
+                    accessibilityState={{ busy: loadingKey === `${item.id}:word` }}
                     style={styles.wordPressable}>
                     <ThemedText type="smallBold" style={styles.word}>
                       {item.word}
                     </ThemedText>
+                    {loadingKey === `${item.id}:word` && <ActivityIndicator size="small" color={theme.primary} />}
                   </Pressable>
                   {item.translations.length > 0 && (
                     <ThemedText type="small">{item.translations.join(', ')}</ThemedText>
@@ -142,11 +154,16 @@ export default function WordsScreen() {
                         „{item.context}”
                       </ThemedText>
                       <Pressable
-                        onPress={() => say(item.context)}
+                        onPress={() => say(item.context, `${item.id}:context`)}
                         hitSlop={8}
                         accessibilityRole="button"
-                        accessibilityLabel={`${t.words.speak}: ${item.context}`}>
-                        <ThemedText style={styles.cardIcon}>🔊</ThemedText>
+                        accessibilityLabel={`${t.words.speak}: ${item.context}`}
+                        accessibilityState={{ busy: loadingKey === `${item.id}:context` }}>
+                        {loadingKey === `${item.id}:context` ? (
+                          <ActivityIndicator size="small" color={theme.primary} style={styles.iconSpinner} />
+                        ) : (
+                          <ThemedText style={styles.cardIcon}>🔊</ThemedText>
+                        )}
                       </Pressable>
                     </View>
                   )}
@@ -211,6 +228,7 @@ const styles = StyleSheet.create({
   card: {
     padding: Spacing.three,
     borderRadius: Spacing.three,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
@@ -221,6 +239,9 @@ const styles = StyleSheet.create({
   },
   wordPressable: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   contextRow: {
     flexDirection: 'row',
@@ -237,6 +258,11 @@ const styles = StyleSheet.create({
   cardIcon: {
     fontSize: 20,
     lineHeight: 26,
+  },
+  // Same footprint as the 🔊 icon, so the row does not jump.
+  iconSpinner: {
+    width: 26,
+    height: 26,
   },
   word: {
     fontSize: 22,
