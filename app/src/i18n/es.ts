@@ -89,6 +89,7 @@ const es: Translations = {
   },
   words: {
     search: 'Buscar…',
+    speak: 'Escuchar',
     empty: 'Aún no hay palabras. ¡Añade la primera!',
     add: '+ Añadir palabra',
     quiz: 'Test',
@@ -252,9 +253,9 @@ const es: Translations = {
     proLifetime: 'Pro – de por vida',
     gold: 'Gold',
     freeDetail: (limit) => `Hasta ${limit} palabras`,
-    proMonthlyDetail: (price) => `${price} / mes · palabras ilimitadas · voz generada por el teléfono · importar palabras de archivos, fotos y textos`,
-    goldDetail: (price) => `${price} / mes · palabras ilimitadas · voces naturales de Google · importación de palabras con reconocimiento de IA más preciso`,
-    proLifetimeDetail: (price) => `${price} pago único · palabras ilimitadas · voz generada por el teléfono · importar palabras de archivos, fotos y textos`,
+    proMonthlyDetail: (price) => `${price} / mes · palabras ilimitadas · pronunciación correcta con voz de Google · importar palabras de archivos, fotos y textos`,
+    goldDetail: (price) => `${price} / mes · palabras ilimitadas · voces naturales HD de Google · importación de palabras con reconocimiento de IA más preciso`,
+    proLifetimeDetail: (price) => `${price} pago único · palabras ilimitadas · pronunciación correcta con voz de Google · importar palabras de archivos, fotos y textos`,
     usage: (count, limit) => `Palabras guardadas: ${count} / ${limit}`,
     unlimited: (count) => `Palabras guardadas: ${count} · sin límite`,
     limitReached: (limit) =>

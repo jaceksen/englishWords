@@ -13,6 +13,8 @@ const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 // Stripe ids (price_…, bpc_…), kept in functions/.env.
 const monthlyPrice = defineString('STRIPE_PRICE_MONTHLY');
 const lifetimePrice = defineString('STRIPE_PRICE_LIFETIME');
+// Pro lifetime is not sold for now (LIFETIME_FOR_SALE in app/src/lib/plans.ts); owners keep it.
+const LIFETIME_FOR_SALE = false;
 const goldPrice = defineString('STRIPE_PRICE_GOLD');
 const portalConfiguration = defineString('STRIPE_PORTAL_CONFIGURATION');
 
@@ -95,6 +97,9 @@ export const createCheckoutSession = onCall({ secrets: [stripeSecretKey] }, asyn
   const plan: unknown = request.data?.plan;
   if (plan !== 'pro_monthly' && plan !== 'gold_monthly' && plan !== 'pro_lifetime') {
     throw new HttpsError('invalid-argument', 'Unknown plan.');
+  }
+  if (plan === 'pro_lifetime' && !LIFETIME_FOR_SALE) {
+    throw new HttpsError('failed-precondition', 'Pro lifetime is not for sale.');
   }
   const appUrl = requireReturnUrl(request.data?.returnUrl);
   // Older app versions did not send a currency; they showed dollars.

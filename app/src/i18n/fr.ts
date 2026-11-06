@@ -90,6 +90,7 @@ const fr: Translations = {
   },
   words: {
     search: 'Rechercher…',
+    speak: 'Écouter',
     empty: 'Aucun mot pour l’instant. Ajoutez le premier !',
     add: '+ Ajouter un mot',
     quiz: 'Quiz',
@@ -253,9 +254,9 @@ const fr: Translations = {
     proLifetime: 'Pro – à vie',
     gold: 'Gold',
     freeDetail: (limit) => `Jusqu’à ${limit} mots`,
-    proMonthlyDetail: (price) => `${price} / mois · mots illimités · voix générée par le téléphone · import de mots depuis fichiers, photos et textes`,
-    goldDetail: (price) => `${price} / mois · mots illimités · voix naturelles Google · import de mots avec une reconnaissance IA plus précise`,
-    proLifetimeDetail: (price) => `${price} en une fois · mots illimités · voix générée par le téléphone · import de mots depuis fichiers, photos et textes`,
+    proMonthlyDetail: (price) => `${price} / mois · mots illimités · prononciation correcte avec une voix Google · import de mots depuis fichiers, photos et textes`,
+    goldDetail: (price) => `${price} / mois · mots illimités · voix naturelles Google HD · import de mots avec une reconnaissance IA plus précise`,
+    proLifetimeDetail: (price) => `${price} en une fois · mots illimités · prononciation correcte avec une voix Google · import de mots depuis fichiers, photos et textes`,
     usage: (count, limit) => `Mots enregistrés : ${count} / ${limit}`,
     unlimited: (count) => `Mots enregistrés : ${count} · sans limite`,
     limitReached: (limit) =>

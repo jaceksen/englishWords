@@ -90,6 +90,7 @@ const de: Translations = {
   },
   words: {
     search: 'Suchen…',
+    speak: 'Anhören',
     empty: 'Noch keine Wörter. Füge dein erstes hinzu!',
     add: '+ Wort hinzufügen',
     quiz: 'Quiz',
@@ -253,9 +254,9 @@ const de: Translations = {
     proLifetime: 'Pro – lebenslang',
     gold: 'Gold',
     freeDetail: (limit) => `Bis zu ${limit} Wörter`,
-    proMonthlyDetail: (price) => `${price} / Monat · unbegrenzt Wörter · Stimme des Telefons · Wörter aus Dateien, Fotos und Texten importieren`,
-    goldDetail: (price) => `${price} / Monat · unbegrenzt Wörter · natürliche Google-Stimmen · Wortimport mit genauerer KI-Erkennung`,
-    proLifetimeDetail: (price) => `${price} einmalig · unbegrenzt Wörter · Stimme des Telefons · Wörter aus Dateien, Fotos und Texten importieren`,
+    proMonthlyDetail: (price) => `${price} / Monat · unbegrenzt Wörter · korrekte Aussprache mit Google-Stimme · Wörter aus Dateien, Fotos und Texten importieren`,
+    goldDetail: (price) => `${price} / Monat · unbegrenzt Wörter · natürliche Google-HD-Stimmen · Wortimport mit genauerer KI-Erkennung`,
+    proLifetimeDetail: (price) => `${price} einmalig · unbegrenzt Wörter · korrekte Aussprache mit Google-Stimme · Wörter aus Dateien, Fotos und Texten importieren`,
     usage: (count, limit) => `Gespeicherte Wörter: ${count} / ${limit}`,
     unlimited: (count) => `Gespeicherte Wörter: ${count} · ohne Limit`,
     limitReached: (limit) =>

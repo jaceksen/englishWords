@@ -15,7 +15,7 @@ import { useAuth } from '@/lib/auth';
 import { buyPlan, manageBilling } from '@/lib/billing';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
 import { LEVELS } from '@/lib/levels';
-import { deviceCurrency, formatPrice, higherPlan, PLANS, type PaidPlanCode, type PlanCode } from '@/lib/plans';
+import { deviceCurrency, formatPrice, higherPlan, LIFETIME_FOR_SALE, PLANS, type PaidPlanCode, type PlanCode } from '@/lib/plans';
 import { storeBillingEnabled } from '@/lib/revenuecat';
 import { useSettings } from '@/lib/settings';
 import { buyInStore, manageStoreSubscription, restoreStorePurchases, storePrices } from '@/lib/store-billing';
@@ -183,12 +183,17 @@ export default function SettingsScreen() {
       label: t.plans.gold,
       detail: t.plans.goldDetail(price('gold_monthly')),
     },
-    {
-      value: 'pro_lifetime',
-      flag: PLANS.pro_lifetime.icon,
-      label: t.plans.proLifetime,
-      detail: t.plans.proLifetimeDetail(price('pro_lifetime')),
-    },
+    // Hidden while not for sale; whoever owns it still sees their plan.
+    ...(LIFETIME_FOR_SALE || hasLifetime
+      ? [
+          {
+            value: 'pro_lifetime' as const,
+            flag: PLANS.pro_lifetime.icon,
+            label: t.plans.proLifetime,
+            detail: t.plans.proLifetimeDetail(price('pro_lifetime')),
+          },
+        ]
+      : []),
   ];
 
   return (

@@ -25,7 +25,7 @@ import {
   type PlanCode,
   type PlanGrant,
 } from '@/lib/plans';
-import { setNaturalVoices } from '@/lib/speech';
+import { setVoice } from '@/lib/speech';
 
 type SettingsState = {
   /** Language being learned. */
@@ -96,7 +96,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    setNaturalVoices(PLANS[planCode].naturalVoices);
+    setVoice(PLANS[planCode].voice);
   }, [planCode]);
 
   // Password reset and other Firebase emails follow the app language.

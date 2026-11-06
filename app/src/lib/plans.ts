@@ -2,16 +2,23 @@ export const FREE_WORD_LIMIT = 10;
 
 /**
  * Subscription plans, stored as users/{uid}.plan and switched by the Stripe webhook after a payment.
- * `wordLimit` counts words in all learning languages; null means unlimited. `naturalVoices` speaks with
- * Google Cloud voices instead of the phone's own. `importWords` unlocks importing from files, photos and texts
- * (also checked in functions/src/import.ts).
+ * `wordLimit` counts words in all learning languages; null means unlimited. `voice` is who speaks: the
+ * device's own voice, a Google Cloud WaveNet voice ("standard") or a Chirp 3 HD one ("hd", see
+ * functions/src/tts.ts). `importWords` unlocks importing from files, photos and texts (also checked in
+ * functions/src/import.ts).
  */
 export const PLANS = {
-  free: { code: 'free', icon: '🌱', wordLimit: FREE_WORD_LIMIT, naturalVoices: false, importWords: false },
-  pro_monthly: { code: 'pro_monthly', icon: '⭐', wordLimit: null, naturalVoices: false, importWords: true },
-  gold_monthly: { code: 'gold_monthly', icon: '🥇', wordLimit: null, naturalVoices: true, importWords: true },
-  pro_lifetime: { code: 'pro_lifetime', icon: '♾️', wordLimit: null, naturalVoices: false, importWords: true },
+  free: { code: 'free', icon: '🌱', wordLimit: FREE_WORD_LIMIT, voice: 'device', importWords: false },
+  pro_monthly: { code: 'pro_monthly', icon: '⭐', wordLimit: null, voice: 'standard', importWords: true },
+  gold_monthly: { code: 'gold_monthly', icon: '🥇', wordLimit: null, voice: 'hd', importWords: true },
+  pro_lifetime: { code: 'pro_lifetime', icon: '♾️', wordLimit: null, voice: 'standard', importWords: true },
 } as const;
+
+/**
+ * Pro lifetime is not sold for now: only users who already own it see it. Must match LIFETIME_FOR_SALE in
+ * functions/src/billing.ts. The Google Play, RevenueCat and Stripe products stay, so this switch brings it back.
+ */
+export const LIFETIME_FOR_SALE = false;
 
 export type PlanCode = keyof typeof PLANS;
 export type Plan = (typeof PLANS)[PlanCode];

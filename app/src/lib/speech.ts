@@ -12,12 +12,17 @@ import type { Language } from '@/lib/languages';
 export type SpeechLang = UiLanguage['speech'] | Language['speech'];
 
 // Shape mirrors functions/src/tts.ts.
-const synthesize = httpsCallable<{ text: string; language: SpeechLang }, { audio: string }>(functions, 'synthesize');
+const synthesize = httpsCallable<{ text: string; language: SpeechLang; quality: CloudVoice }, { audio: string }>(functions, 'synthesize');
 
-/** Google Cloud voices instead of the phone's own; part of the Gold plan (see SettingsProvider). */
-let naturalVoices = false;
-export function setNaturalVoices(enabled: boolean) {
-  naturalVoices = enabled;
+type CloudVoice = 'standard' | 'hd';
+
+/**
+ * Who speaks, from the plan (see SettingsProvider): the phone's own voice, or a Google Cloud one, WaveNet
+ * for Pro ("standard") and Chirp 3 HD for Gold ("hd").
+ */
+let voice: 'device' | CloudVoice = 'device';
+export function setVoice(value: typeof voice) {
+  voice = value;
 }
 
 /** Ends the clip that is playing now, resolving its `speak()` promise. */
@@ -25,9 +30,9 @@ let finishClip: (() => void) | null = null;
 
 /** Speaks `text` and resolves when finished (or stopped). */
 export async function speak(text: string, language: SpeechLang, rate = 0.95) {
-  if (naturalVoices) {
+  if (voice !== 'device') {
     try {
-      await playClip(await naturalClip(text, language));
+      await playClip(await cloudClip(text, language, voice));
       return;
     } catch {
       // Offline or the service failed: the phone's voice is better than silence.
@@ -68,11 +73,13 @@ function hash(text: string) {
 }
 
 /** The clip for `text`, from the phone's cache or synthesized once by the server. */
-async function naturalClip(text: string, language: SpeechLang) {
+async function cloudClip(text: string, language: SpeechLang, quality: CloudVoice) {
   const directory = new Directory(Paths.cache, 'tts');
-  const file = new File(directory, `${language}-${hash(text)}-${text.length}.mp3`);
+  // Gold clips keep their original names, so the cache from before Pro voices stays valid.
+  const prefix = quality === 'hd' ? '' : `${quality}-`;
+  const file = new File(directory, `${prefix}${language}-${hash(text)}-${text.length}.mp3`);
   if (file.exists) return file;
-  const { data } = await synthesize({ text, language });
+  const { data } = await synthesize({ text, language, quality });
   directory.create({ idempotent: true, intermediates: true });
   await file.write(data.audio, { encoding: 'base64' });
   return file;

@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { formatDayHeader } from '@/lib/dates';
 import { useSettings } from '@/lib/settings';
+import { speak, stopSpeaking } from '@/lib/speech';
 import { deleteWord, subscribeWords, type Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-home.jpg');
@@ -59,6 +60,12 @@ export default function WordsScreen() {
       { text: t.common.cancel, style: 'cancel' },
       { text: t.common.delete, style: 'destructive', onPress: () => user && deleteWord(user.uid, word.id) },
     ]);
+  }
+
+  /** Says a word or sentence in the learning language, cutting off whatever is playing. */
+  function say(text: string) {
+    stopSpeaking();
+    speak(text, language.speech);
   }
 
   return (
@@ -113,24 +120,47 @@ export default function WordsScreen() {
             </ThemedText>
           )}
           renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push({ pathname: '/add', params: { id: item.id } })}
-              onLongPress={() => confirmDelete(item)}>
+            <Pressable onLongPress={() => confirmDelete(item)}>
               <ThemedView type="backgroundElement" style={styles.card}>
                 <View style={styles.cardText}>
-                  <ThemedText type="smallBold" style={styles.word}>
-                    {item.word}
-                  </ThemedText>
+                  <Pressable
+                    onPress={() => say(item.word)}
+                    hitSlop={4}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t.words.speak}: ${item.word}`}
+                    style={styles.wordPressable}>
+                    <ThemedText type="smallBold" style={styles.word}>
+                      {item.word}
+                    </ThemedText>
+                  </Pressable>
                   {item.translations.length > 0 && (
                     <ThemedText type="small">{item.translations.join(', ')}</ThemedText>
                   )}
                   {!!item.context && (
-                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
-                      „{item.context}”
-                    </ThemedText>
+                    <View style={styles.contextRow}>
+                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.context}>
+                        „{item.context}”
+                      </ThemedText>
+                      <Pressable
+                        onPress={() => say(item.context)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t.words.speak}: ${item.context}`}>
+                        <ThemedText style={styles.cardIcon}>🔊</ThemedText>
+                      </Pressable>
+                    </View>
                   )}
                 </View>
-                <MasteryBadge box={item.stats.box} />
+                <View style={styles.cardSide}>
+                  <MasteryBadge box={item.stats.box} />
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/add', params: { id: item.id } })}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t.titles.editWord}: ${item.word}`}>
+                    <ThemedText style={styles.cardIcon}>✏️</ThemedText>
+                  </Pressable>
+                </View>
               </ThemedView>
             </Pressable>
           )}
@@ -188,6 +218,25 @@ const styles = StyleSheet.create({
   cardText: {
     flex: 1,
     gap: Spacing.two,
+  },
+  wordPressable: {
+    alignSelf: 'flex-start',
+  },
+  contextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  context: {
+    flex: 1,
+  },
+  cardSide: {
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  cardIcon: {
+    fontSize: 20,
+    lineHeight: 26,
   },
   word: {
     fontSize: 22,
