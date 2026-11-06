@@ -102,8 +102,16 @@ function playClip(file: File, onStart?: () => void) {
       if (finishClip !== finish) return;
       finishClip = null;
       clearTimeout(timeout);
-      subscription.remove();
-      player.remove();
+      try {
+        subscription.remove();
+        // remove() only forgets the player on Android; release() frees its ExoPlayer, MediaSession and
+        // AudioTrack. Without it they pile up until the system refuses new audio tracks and the voice quiz
+        // goes silent after a few rounds.
+        player.remove();
+        player.release();
+      } catch {
+        // Freeing must never keep the quiz waiting.
+      }
       resolve();
     }
     finishClip = finish;
