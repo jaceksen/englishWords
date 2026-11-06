@@ -13,16 +13,23 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { formatDayHeader } from '@/lib/dates';
 import { useSettings } from '@/lib/settings';
-import { speak, stopSpeaking } from '@/lib/speech';
-import { deleteWord, subscribeWords, type Word } from '@/lib/words';
+import { pronunciationMatches } from '@/lib/quiz';
+import { speak, stopSpeaking, useSpeechInput } from '@/lib/speech';
+import { deleteWord, setMarked, subscribeWords, unmarkWords, type Word } from '@/lib/words';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-home.jpg');
 const ADD_BUTTON = require('@/assets/images/add-word-button.png');
 const QUIZ_BUTTON = require('@/assets/images/start-button.png');
 
+/** How long the pronunciation result stays on the card; a plain "well done" needs less time to read. */
+const PRACTICE_RESULT_MS = 4000;
+const PRACTICE_OK_MS = 2000;
+
+type Practice = { id: string; status: 'listening' | 'ok' | 'wrong' | 'silent'; heard: string };
+
 export default function WordsScreen() {
   const { user } = useAuth();
-  const { languageCode, language, t, uiLanguage } = useSettings();
+  const { languageCode, language, t, uiLanguage, plan } = useSettings();
   const theme = useTheme();
   const [loaded, setLoaded] = useState<{ lang: string; words: Word[] } | null>(null);
   // Words of the previously selected language are stale while the new ones load.
@@ -39,6 +46,18 @@ export default function WordsScreen() {
       (e) => setError(e.message),
     );
   }, [user, languageCode]);
+
+  // Pro and Gold: ticked words make up the "marked" quiz range; counted over all words, not just the search.
+  const canMark = plan.markWords;
+  const markedIds = useMemo(() => (words ?? []).filter((w) => w.marked).map((w) => w.id), [words]);
+
+  function toggleMarked(word: Word) {
+    if (user) setMarked(user.uid, word.id, !word.marked).catch((e) => setError(e.message));
+  }
+
+  function unmarkAll() {
+    if (user) unmarkWords(user.uid, markedIds).catch((e) => setError(e.message));
+  }
 
   const sections = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -78,6 +97,56 @@ export default function WordsScreen() {
     speak(text, language.speech, undefined, done).finally(done);
   }
 
+  // Gold: quick pronunciation check. The result shows on the card and fades after a few seconds.
+  const canPractise = plan.pronunciation;
+  const speech = useSpeechInput({ noPermission: t.errors.noMicPermission });
+  const [practice, setPractice] = useState<Practice | null>(null);
+  const practiceRequest = useRef(0);
+  const practiceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Leaving the screen ends listening and the pending result timer.
+  const abortListening = speech.abort;
+  useEffect(
+    () => () => {
+      if (practiceTimer.current) clearTimeout(practiceTimer.current);
+      abortListening();
+    },
+    [abortListening],
+  );
+
+  async function practise(word: Word) {
+    // One recognition at a time: a tap while listening (on any card) just ends it.
+    if (practice?.status === 'listening') {
+      speech.stop();
+      return;
+    }
+    if (practiceTimer.current) clearTimeout(practiceTimer.current);
+    stopSpeaking();
+    const request = ++practiceRequest.current;
+    setPractice({ id: word.id, status: 'listening', heard: '' });
+    const heard = await speech.listen(language.speech);
+    if (practiceRequest.current !== request) return;
+    const status = !heard ? 'silent' : pronunciationMatches(word, heard) ? 'ok' : 'wrong';
+    setPractice({ id: word.id, status, heard });
+    practiceTimer.current = setTimeout(() => {
+      if (practiceRequest.current === request) setPractice(null);
+    }, status === 'ok' ? PRACTICE_OK_MS : PRACTICE_RESULT_MS);
+  }
+
+  function practiceMessage(p: Practice) {
+    if (speech.error) return { text: speech.error, color: theme.danger };
+    switch (p.status) {
+      case 'listening':
+        return { text: t.words.practiceListening, color: theme.textSecondary };
+      case 'ok':
+        return { text: t.words.practiceOk, color: theme.success };
+      case 'wrong':
+        return { text: t.words.practiceWrong(p.heard), color: theme.danger };
+      case 'silent':
+        return { text: t.words.practiceSilent, color: theme.textSecondary };
+    }
+  }
+
   return (
     <ScreenBackground source={BACKGROUND} style={styles.container}>
       <Stack.Screen
@@ -114,6 +183,16 @@ export default function WordsScreen() {
           />
         </View>
         {error && <ThemedText themeColor="danger">{error}</ThemedText>}
+        {canMark && markedIds.length > 0 && (
+          <View style={styles.markedRow}>
+            <ThemedText type="smallBold">{t.words.markedCount(markedIds.length)}</ThemedText>
+            <Pressable onPress={unmarkAll} hitSlop={8} accessibilityRole="button">
+              <ThemedText type="smallBold" style={{ color: theme.primary }}>
+                {t.words.unmarkAll}
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
         <SectionList
           sections={sections}
           keyExtractor={(item) => item.id}
@@ -132,22 +211,64 @@ export default function WordsScreen() {
           renderItem={({ item }) => (
             <Pressable onLongPress={() => confirmDelete(item)}>
               <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
-                <View style={styles.cardText}>
+                {canMark && (
                   <Pressable
-                    onPress={() => say(item.word, `${item.id}:word`)}
-                    hitSlop={4}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t.words.speak}: ${item.word}`}
-                    accessibilityState={{ busy: loadingKey === `${item.id}:word` }}
-                    style={styles.wordPressable}>
-                    <ThemedText type="smallBold" style={styles.word}>
-                      {item.word}
-                    </ThemedText>
-                    {loadingKey === `${item.id}:word` && <ActivityIndicator size="small" color={theme.primary} />}
+                    onPress={() => toggleMarked(item)}
+                    hitSlop={8}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={`${t.words.mark}: ${item.word}`}
+                    accessibilityState={{ checked: item.marked }}
+                    style={[
+                      styles.checkbox,
+                      { borderColor: item.marked ? theme.primary : theme.textSecondary },
+                      item.marked && { backgroundColor: theme.primary },
+                    ]}>
+                    {item.marked && <ThemedText style={[styles.checkmark, { color: theme.onPrimary }]}>✓</ThemedText>}
                   </Pressable>
+                )}
+                <View style={styles.cardText}>
+                  <View style={styles.wordRow}>
+                    <Pressable
+                      onPress={() => say(item.word, `${item.id}:word`)}
+                      hitSlop={4}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t.words.speak}: ${item.word}`}
+                      accessibilityState={{ busy: loadingKey === `${item.id}:word` }}
+                      style={styles.wordPressable}>
+                      {/* Shows that tapping the word plays it. */}
+                      <ThemedText style={styles.wordSpeaker}>🔊</ThemedText>
+                      <ThemedText type="smallBold" style={styles.word}>
+                        {item.word}
+                      </ThemedText>
+                      {loadingKey === `${item.id}:word` && <ActivityIndicator size="small" color={theme.primary} />}
+                    </Pressable>
+                    {canPractise && (
+                      <Pressable
+                        onPress={() => practise(item)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t.words.practice}: ${item.word}`}
+                        accessibilityState={{ busy: practice?.id === item.id && practice.status === 'listening' }}>
+                        <ThemedText style={styles.wordSpeaker}>
+                          {practice?.id === item.id && practice.status === 'listening' ? '⏹' : '🎤'}
+                        </ThemedText>
+                      </Pressable>
+                    )}
+                  </View>
                   {item.translations.length > 0 && (
-                    <ThemedText type="small">{item.translations.join(', ')}</ThemedText>
+                    <ThemedText type="small" style={styles.meaning}>
+                      {item.translations.join(', ')}
+                    </ThemedText>
                   )}
+                  {practice?.id === item.id &&
+                    (() => {
+                      const message = practiceMessage(practice);
+                      return (
+                        <ThemedText type="smallBold" style={[styles.meaning, { color: message.color }]}>
+                          {message.text}
+                        </ThemedText>
+                      );
+                    })()}
                   {!!item.context && (
                     <View style={styles.contextRow}>
                       <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.context}>
@@ -233,12 +354,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
+  checkbox: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkmark: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: 700,
+  },
+  markedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.one,
+  },
   cardText: {
     flex: 1,
     gap: Spacing.two,
   },
+  // The word and its meaning are the card's headline, centred like on the web portal.
+  wordRow: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    maxWidth: '100%',
+  },
   wordPressable: {
-    alignSelf: 'flex-start',
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
@@ -269,6 +417,14 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontWeight: 700,
     flexShrink: 1,
+    textAlign: 'center',
+  },
+  meaning: {
+    textAlign: 'center',
+  },
+  wordSpeaker: {
+    fontSize: 16,
+    lineHeight: 28,
   },
   actions: {
     flexDirection: 'row',

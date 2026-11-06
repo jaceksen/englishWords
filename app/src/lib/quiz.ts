@@ -209,6 +209,18 @@ function normalize(text: string, lang: Word['lang'] | null) {
   return result;
 }
 
+/**
+ * Quick pronunciation check on the word list: did speech recognition understand this very word? Recognizers
+ * often add a little ("the …", "to …"), so the word may also stand as whole words inside what was heard.
+ */
+export function pronunciationMatches(word: Word, heard: string) {
+  const said = normalize(heard, word.lang);
+  if (!said) return false;
+  const targets = [word.word, withoutArticle(word.word, word.lang)].map((w) => normalize(w, word.lang)).filter(Boolean);
+  const padded = ` ${said} `;
+  return targets.some((target) => said === target || padded.includes(` ${target} `));
+}
+
 /** Exact matches are graded locally; anything else goes to the model for a lenient check. */
 export async function grade(question: Question, answer: string, uiLang: UiLanguageCode): Promise<Grade> {
   const { word } = question;

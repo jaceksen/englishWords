@@ -5,13 +5,13 @@ export const FREE_WORD_LIMIT = 10;
  * `wordLimit` counts words in all learning languages; null means unlimited. `voice` is who speaks: the
  * device's own voice, a Google Cloud WaveNet voice ("standard") or a Chirp 3 HD one ("hd", see
  * functions/src/tts.ts). `importWords` unlocks importing from files, photos and texts (also checked in
- * functions/src/import.ts). `examples` reads the word's example sentence after an answer in the voice quiz.
+ * functions/src/import.ts). `markWords` lets the user tick words on the list and quiz just those. `pronunciation` adds the quick pronunciation check on the word list. `voiceExtras` unlocks the voice quiz extras: the word's example sentence and a pause to repeat after an answer.
  */
 export const PLANS = {
-  free: { code: 'free', icon: '🌱', wordLimit: FREE_WORD_LIMIT, voice: 'device', importWords: false, examples: false },
-  pro_monthly: { code: 'pro_monthly', icon: '⭐', wordLimit: null, voice: 'standard', importWords: true, examples: false },
-  gold_monthly: { code: 'gold_monthly', icon: '🥇', wordLimit: null, voice: 'hd', importWords: true, examples: true },
-  pro_lifetime: { code: 'pro_lifetime', icon: '♾️', wordLimit: null, voice: 'standard', importWords: true, examples: false },
+  free: { code: 'free', icon: '🌱', wordLimit: FREE_WORD_LIMIT, voice: 'device', importWords: false, markWords: false, voiceExtras: false, pronunciation: false },
+  pro_monthly: { code: 'pro_monthly', icon: '⭐', wordLimit: null, voice: 'standard', importWords: true, markWords: true, voiceExtras: false, pronunciation: false },
+  gold_monthly: { code: 'gold_monthly', icon: '🥇', wordLimit: null, voice: 'hd', importWords: true, markWords: true, voiceExtras: true, pronunciation: true },
+  pro_lifetime: { code: 'pro_lifetime', icon: '♾️', wordLimit: null, voice: 'standard', importWords: true, markWords: true, voiceExtras: false, pronunciation: false },
 } as const;
 
 /**

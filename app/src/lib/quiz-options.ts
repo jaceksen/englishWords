@@ -15,11 +15,13 @@ export type QuizOptions = {
   rounds: number;
   /** Voice quiz (Gold): read the word's example sentence after a wrong answer, or after every answer. */
   example: ExampleMode;
+  /** Voice quiz (Gold): a pause (about 4 s) to repeat the answer, after a wrong answer or after every one. */
+  pause: ExampleMode;
 };
 
 export type ExampleMode = 'off' | 'wrong' | 'all';
 
-const DEFAULTS: QuizOptions = { range: 'today', direction: 'translate', mode: 'voice', count: 10, rounds: 1, example: 'off' };
+const DEFAULTS: QuizOptions = { range: 'today', direction: 'translate', mode: 'voice', count: 10, rounds: 1, example: 'off', pause: 'off' };
 
 const DIRECTIONS: DirectionChoice[] = ['translate', 'recall', 'cloze', 'mix'];
 const MODES: QuizMode[] = ['text', 'voice'];
@@ -44,6 +46,7 @@ function load(): QuizOptions {
       count: Number.isInteger(saved.count) && saved.count >= 0 ? saved.count : DEFAULTS.count,
       rounds: pick(ROUND_OPTIONS, rounds, DEFAULTS.rounds),
       example: pick(EXAMPLES, saved.example, DEFAULTS.example),
+      pause: pick(EXAMPLES, saved.pause, DEFAULTS.pause),
     };
   } catch {
     return DEFAULTS;

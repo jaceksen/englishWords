@@ -1,8 +1,9 @@
 import type { Translations, UiLanguage } from '@/i18n';
 
-export type RangeKey = 'today' | 'week' | 'last7' | 'all';
+/** `marked`: the words the user ticked on the word list (not a date range). */
+export type RangeKey = 'today' | 'week' | 'last7' | 'all' | 'marked';
 
-export const RANGE_KEYS: RangeKey[] = ['today', 'week', 'last7', 'all'];
+export const RANGE_KEYS: RangeKey[] = ['today', 'week', 'last7', 'all', 'marked'];
 
 /** Local-time day key, e.g. "2026-10-27". */
 export function dayKey(date = new Date()) {
@@ -16,7 +17,7 @@ function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-/** Start of the range (inclusive), or null for "all". Weeks start on Monday. */
+/** Start of the range (inclusive), or null for "all" and "marked". Weeks start on Monday. */
 export function rangeStart(range: RangeKey, now = new Date()): Date | null {
   const today = startOfDay(now);
   switch (range) {
@@ -29,6 +30,7 @@ export function rangeStart(range: RangeKey, now = new Date()): Date | null {
     case 'last7':
       return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
     case 'all':
+    case 'marked':
       return null;
   }
 }

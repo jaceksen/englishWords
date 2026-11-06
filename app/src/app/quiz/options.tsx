@@ -17,9 +17,9 @@ const COUNTS = [5, 10, 20, 0] as const; // 0 = all
 /** Quiz settings, opened with the gear on the quiz screen; changes apply right away. */
 export default function QuizOptionsScreen() {
   const { language, uiLanguageCode, t, plan } = useSettings();
-  const { range, direction, mode, count, rounds, example } = useQuizOptions();
+  const { range, direction, mode, count, rounds, example, pause } = useQuizOptions();
   // Gold only; other plans see it locked.
-  const examplesLocked = !plan.examples;
+  const extrasLocked = !plan.voiceExtras;
 
   return (
     <ScreenBackground source={BACKGROUND} style={styles.container}>
@@ -28,7 +28,11 @@ export default function QuizOptionsScreen() {
           label={t.setup.range}
           value={range}
           onChange={(value) => setQuizOptions({ range: value })}
-          options={RANGE_KEYS.map((value) => ({ value, label: t.ranges[value] }))}
+          // "Marked" (words ticked on the list) is a Pro and Gold feature.
+          options={RANGE_KEYS.filter((value) => value !== 'marked' || plan.markWords).map((value) => ({
+            value,
+            label: t.ranges[value],
+          }))}
         />
         <Chips
           label={t.setup.direction}
@@ -70,7 +74,7 @@ export default function QuizOptionsScreen() {
         )}
         {mode === 'voice' && (
           <View style={styles.section}>
-            {examplesLocked && (
+            {extrasLocked && (
               <>
                 <ThemedText type="smallBold" style={styles.center}>
                   🔒 {t.setup.exampleLocked}
@@ -78,11 +82,20 @@ export default function QuizOptionsScreen() {
                 <Button title={t.import.upgrade} onPress={() => router.push('/settings')} />
               </>
             )}
-            <View style={examplesLocked && styles.dimmed} pointerEvents={examplesLocked ? 'none' : 'auto'}>
+            <View style={[styles.section, extrasLocked && styles.dimmed]} pointerEvents={extrasLocked ? 'none' : 'auto'}>
               <Chips
                 label={t.setup.example}
-                value={examplesLocked ? 'off' : example}
+                value={extrasLocked ? 'off' : example}
                 onChange={(value) => setQuizOptions({ example: value })}
+                options={(['off', 'wrong', 'all'] as ExampleMode[]).map((value) => ({
+                  value,
+                  label: { off: t.setup.exampleOff, wrong: t.setup.exampleWrong, all: t.setup.exampleAll }[value],
+                }))}
+              />
+              <Chips
+                label={t.setup.pause}
+                value={extrasLocked ? 'off' : pause}
+                onChange={(value) => setQuizOptions({ pause: value })}
                 options={(['off', 'wrong', 'all'] as ExampleMode[]).map((value) => ({
                   value,
                   label: { off: t.setup.exampleOff, wrong: t.setup.exampleWrong, all: t.setup.exampleAll }[value],

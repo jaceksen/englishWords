@@ -17,8 +17,10 @@ const START_BUTTON = require('@/assets/images/start-button.png');
 /** One big start button; the quiz settings live behind the gear in the header. */
 export default function QuizSetupScreen() {
   const { user } = useAuth();
-  const { languageCode, language, uiLanguageCode, t } = useSettings();
-  const { range, direction, mode, count, rounds } = useQuizOptions();
+  const { languageCode, language, uiLanguageCode, t, plan } = useSettings();
+  const { range: savedRange, direction, mode, count, rounds } = useQuizOptions();
+  // A saved "marked" range falls back to today's words once the plan no longer includes it.
+  const range = savedRange === 'marked' && !plan.markWords ? 'today' : savedRange;
   const [loaded, setLoaded] = useState<{ key: string; words: Word[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Words for a previously selected range or language are stale while the new ones load.
@@ -45,8 +47,15 @@ export default function QuizSetupScreen() {
       <Stack.Screen
         options={{
           headerRight: () => (
-            <Pressable onPress={() => router.push('/quiz/options')} hitSlop={8} accessibilityLabel={t.titles.quizOptions}>
+            // Labelled, so it is not mistaken for the app settings gear on the word list.
+            <Pressable
+              onPress={() => router.push('/quiz/options')}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t.titles.quizOptions}
+              style={styles.headerButton}>
               <ThemedText style={styles.headerIcon}>⚙️</ThemedText>
+              <ThemedText type="smallBold">{t.titles.quizOptions}</ThemedText>
             </Pressable>
           ),
         }}
@@ -94,6 +103,11 @@ const styles = StyleSheet.create({
   },
   center: {
     textAlign: 'center',
+  },
+  headerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   headerIcon: {
     fontSize: 22,

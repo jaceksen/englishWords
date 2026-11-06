@@ -37,6 +37,8 @@ export type Word = {
   createdAt: Date;
   dayKey: string;
   stats: { asked: number; correct: number; box: number; lastAskedAt: Date | null };
+  /** Ticked on the word list, to quiz just these (Pro and Gold). */
+  marked: boolean;
 };
 
 export type WordInput = Pick<Word, 'word' | 'nativeLang' | 'translations' | 'context' | 'partOfSpeech' | 'definition'>;
@@ -66,6 +68,7 @@ function fromSnapshot(snap: { id: string; data: () => any }): Word {
       box: data.stats?.box ?? 0,
       lastAskedAt: data.stats?.lastAskedAt?.toDate?.() ?? null,
     },
+    marked: data.marked === true,
   };
 }
 
@@ -84,6 +87,11 @@ export function subscribeWords(
 }
 
 export async function fetchWords(uid: string, lang: LanguageCode, range: RangeKey) {
+  if (range === 'marked') {
+    // Two equality filters need no composite index; sort like the other ranges, newest first.
+    const marked = await getDocs(query(wordsCollection(uid), where('lang', '==', lang), where('marked', '==', true)));
+    return marked.docs.map(fromSnapshot).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
   const start = rangeStart(range);
   const byLang = where('lang', '==', lang);
   const q = start
@@ -133,6 +141,20 @@ export async function addWords(uid: string, lang: LanguageCode, inputs: WordInpu
 
 export function updateWord(uid: string, id: string, input: Partial<WordInput>) {
   return updateDoc(doc(db, 'users', uid, 'words', id), input);
+}
+
+/** Ticks or unticks a word for the "marked" quiz range. */
+export function setMarked(uid: string, id: string, marked: boolean) {
+  return updateDoc(doc(db, 'users', uid, 'words', id), { marked });
+}
+
+/** Unticks the given words, in batches within Firestore's 500 writes per batch. */
+export async function unmarkWords(uid: string, ids: string[]) {
+  for (let i = 0; i < ids.length; i += 500) {
+    const batch = writeBatch(db);
+    for (const id of ids.slice(i, i + 500)) batch.update(doc(db, 'users', uid, 'words', id), { marked: false });
+    await batch.commit();
+  }
 }
 
 export function deleteWord(uid: string, id: string) {

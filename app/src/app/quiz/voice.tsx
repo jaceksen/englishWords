@@ -12,20 +12,22 @@ import { Spacing } from '@/constants/theme';
 import { useQuiz } from '@/hooks/use-quiz';
 import { UI_LANGUAGES } from '@/i18n';
 import { LANGUAGES } from '@/lib/languages';
-import { useQuizOptions } from '@/lib/quiz-options';
+import { useQuizOptions, type ExampleMode } from '@/lib/quiz-options';
 import { useSettings } from '@/lib/settings';
 import { speak, stopSpeaking, useSpeechInput } from '@/lib/speech';
 
 const BACKGROUND = require('@/assets/images/backgrounds/bg-quiz-voice.jpg');
 
 const PAUSE_AFTER_RESULT_MS = 1200;
+/** Gold: time to repeat the answer (and example) aloud, on top of the pause above. */
+const REPEAT_PAUSE_MS = 4500;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function VoiceQuizScreen() {
   const quiz = useQuiz();
   const { t, uiLanguage, plan } = useSettings();
-  const { example } = useQuizOptions();
+  const { example, pause } = useQuizOptions();
   const speech = useSpeechInput({ noPermission: t.errors.noMicPermission });
   const [paused, setPaused] = useState(false);
   const [status, setStatus] = useState('');
@@ -86,13 +88,21 @@ export default function VoiceQuizScreen() {
             : LANGUAGES[question.word.lang].speech,
         );
       }
-      // Gold: the word's example sentence, after a wrong answer or after every one.
+      // Gold extras, each after a wrong answer or after every one.
+      const applies = (mode: ExampleMode) => plan.voiceExtras && (mode === 'all' || (mode === 'wrong' && !result.correct));
       const context = question.word.context;
-      if (plan.examples && context && (example === 'all' || (example === 'wrong' && !result.correct))) {
+      if (context && applies(example)) {
         if (cancelled()) return;
         await speak(t.spoken.example, uiLanguage.speech);
         if (cancelled()) return;
         await speak(context, LANGUAGES[question.word.lang].speech);
+      }
+      if (applies(pause)) {
+        if (cancelled()) return;
+        setStatus(t.voice.repeat);
+        await sleep(REPEAT_PAUSE_MS);
+        if (cancelled()) return;
+        setStatus('');
       }
       await sleep(PAUSE_AFTER_RESULT_MS);
       if (cancelled()) return;
