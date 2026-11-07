@@ -38,12 +38,12 @@ const DAILY_CALLS = 60;
 // The Gold model can take a few minutes on a long text; the app waits as long (app/src/lib/import.ts).
 const IMPORT_OPTIONS = { secrets: [anthropicApiKey], timeoutSeconds: 300, memory: '512MiB' as const };
 
-/** Import is part of Pro and higher; also checked here because the app can be bypassed. Returns the plan. */
+/** Import is part of the Gold plan only; also checked here because the app can be bypassed. Returns the plan. */
 async function requireImportAccess(request: CallableRequest) {
   requireAuth(request);
   const plan = await effectivePlan(request.auth.uid, request.auth.token.email);
-  if (plan === 'free') {
-    throw new HttpsError('permission-denied', 'Importing words is part of the Pro plan.');
+  if (plan !== 'gold_monthly') {
+    throw new HttpsError('permission-denied', 'Importing words is part of the Gold plan.');
   }
   await countCall(request.auth.uid);
   return plan;

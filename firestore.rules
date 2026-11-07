@@ -19,6 +19,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // App-wide settings set by the admin in the Firebase console (e.g. settings/appversion).
+    match /settings/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // The plan, Stripe ids and the Google Play plan (store) are written only by Cloud Functions after a payment.
     match /users/{uid} {
       allow read, delete: if isOwner(uid);

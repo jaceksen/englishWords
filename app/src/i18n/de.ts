@@ -219,6 +219,7 @@ const de: Translations = {
     deleteError: 'Das Konto konnte nicht gelöscht werden. Bitte versuche es erneut.',
     level: 'Dein Niveau',
     levelHint: 'Danach wählt die KI Wörter aus importierten Fotos und Texten aus.',
+    version: 'Version',
   },
   levels: {
     A2: 'Grundstufe',
@@ -228,7 +229,7 @@ const de: Translations = {
   },
   import: {
     intro: 'Füge viele Wörter auf einmal aus einer Datei, einem Foto oder einem Text hinzu.',
-    locked: 'Der Wortimport ist im Pro-Plan und höher verfügbar.',
+    locked: 'Der Wortimport ist nur im Gold-Plan verfügbar.',
     upgrade: 'Pläne ansehen',
     spreadsheet: 'Excel- oder CSV-Datei',
     spreadsheetHint: 'Spalte A: Wort, B: Satz (optional), C: Übersetzungen (optional). Fehlendes ergänzt die KI.',
@@ -272,9 +273,9 @@ const de: Translations = {
     proLifetime: 'Pro – lebenslang',
     gold: 'Gold',
     freeDetail: (limit) => `Bis zu ${limit} Wörter`,
-    proMonthlyDetail: (price) => `${price} / Monat · unbegrenzt Wörter · korrekte Aussprache mit Google-Stimme · Wörter aus Dateien, Fotos und Texten importieren`,
-    goldDetail: (price) => `${price} / Monat · unbegrenzt Wörter · natürliche Google-HD-Stimmen · Wortimport mit genauerer KI-Erkennung · Beispielsätze und Pause zum Nachsprechen im Sprachquiz · Ausspracheübung`,
-    proLifetimeDetail: (price) => `${price} einmalig · unbegrenzt Wörter · korrekte Aussprache mit Google-Stimme · Wörter aus Dateien, Fotos und Texten importieren`,
+    proMonthlyDetail: (price) => `${price} / Monat · unbegrenzt Wörter · korrekte Aussprache mit Google-Stimme`,
+    goldDetail: (price) => `${price} / Monat · unbegrenzt Wörter · natürliche Google-HD-Stimmen · Wörter aus Excel, Fotos und Texten importieren · Beispielsätze und Pause zum Nachsprechen im Sprachquiz · Ausspracheübung`,
+    proLifetimeDetail: (price) => `${price} einmalig · unbegrenzt Wörter · korrekte Aussprache mit Google-Stimme`,
     usage: (count, limit) => `Gespeicherte Wörter: ${count} / ${limit}`,
     unlimited: (count) => `Gespeicherte Wörter: ${count} · ohne Limit`,
     limitReached: (limit) =>
@@ -291,6 +292,13 @@ const de: Translations = {
     opening: 'Zahlung wird geöffnet…',
     manage: 'Zahlungen und Rechnungen',
     billingError: "Die Zahlungsseite konnte nicht geöffnet werden. Bitte versuche es erneut.",
+  },
+  /** New app version notice (settings/appversion in Firestore). */
+  update: {
+    title: 'Neue Version',
+    message: 'Eine neue Version der App ist verfügbar.',
+    update: 'Aktualisieren',
+    close: 'Schließen',
   },
 };
 

@@ -218,6 +218,7 @@ const en: Translations = {
     deleteError: 'Could not delete the account. Please try again.',
     level: 'Your level',
     levelHint: 'AI uses it to choose words from imported photos and texts.',
+    version: 'Version',
   },
   levels: {
     A2: 'Elementary',
@@ -227,7 +228,7 @@ const en: Translations = {
   },
   import: {
     intro: 'Add many words at once from a file, a photo or a text.',
-    locked: 'Importing words is available on Pro and higher plans.',
+    locked: 'Importing words is available only on the Gold plan.',
     upgrade: 'See plans',
     spreadsheet: 'Excel or CSV file',
     spreadsheetHint: 'Column A: word, B: sentence (optional), C: translations (optional). AI fills in what is missing.',
@@ -271,9 +272,9 @@ const en: Translations = {
     proLifetime: 'Pro – lifetime',
     gold: 'Gold',
     freeDetail: (limit) => `Up to ${limit} words`,
-    proMonthlyDetail: (price) => `${price} / month · unlimited words · accurate Google voice pronunciation · import words from files, photos and texts`,
-    goldDetail: (price) => `${price} / month · unlimited words · natural Google HD voices · word import with more accurate AI recognition · example sentences and a pause to repeat in the voice quiz · pronunciation practice`,
-    proLifetimeDetail: (price) => `${price} one-time · unlimited words · accurate Google voice pronunciation · import words from files, photos and texts`,
+    proMonthlyDetail: (price) => `${price} / month · unlimited words · accurate Google voice pronunciation`,
+    goldDetail: (price) => `${price} / month · unlimited words · natural Google HD voices · import words from Excel, photos and texts · example sentences and a pause to repeat in the voice quiz · pronunciation practice`,
+    proLifetimeDetail: (price) => `${price} one-time · unlimited words · accurate Google voice pronunciation`,
     usage: (count, limit) => `Saved words: ${count} / ${limit}`,
     unlimited: (count) => `Saved words: ${count} · no limit`,
     limitReached: (limit) => `The free plan lets you save up to ${limit} words. Upgrade to Pro for unlimited words.`,
@@ -289,6 +290,13 @@ const en: Translations = {
     opening: 'Opening payment…',
     manage: 'Payments and invoices',
     billingError: "Couldn't open the payment page. Please try again.",
+  },
+  /** New app version notice (settings/appversion in Firestore). */
+  update: {
+    title: 'New version',
+    message: 'A new version of the app is available.',
+    update: 'Update',
+    close: 'Close',
   },
 };
 

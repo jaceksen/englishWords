@@ -2,7 +2,7 @@
   "expo": {
     "name": "VocabSprint",
     "slug": "english-words",
-    "version": "1.0.0",
+    "version": "4.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "englishwords",
@@ -23,6 +23,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.vocabsprint",
+      "versionCode": 4,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.RECORD_AUDIO"
@@ -80,6 +81,7 @@
       "reactCompiler": true
     },
     "extra": {
+      "releaseDate": "2026-11-07",
       "router": {
         "asyncRoutes": {
           "web": true

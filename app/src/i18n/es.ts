@@ -218,6 +218,7 @@ const es: Translations = {
     deleteError: 'No se pudo eliminar la cuenta. Inténtalo de nuevo.',
     level: 'Tu nivel',
     levelHint: 'La IA lo usa para elegir palabras de las fotos y textos importados.',
+    version: 'Versión',
   },
   levels: {
     A2: 'Básico',
@@ -227,7 +228,7 @@ const es: Translations = {
   },
   import: {
     intro: 'Añade muchas palabras a la vez desde un archivo, una foto o un texto.',
-    locked: 'La importación de palabras está disponible en el plan Pro y superiores.',
+    locked: 'La importación de palabras solo está disponible en el plan Gold.',
     upgrade: 'Ver planes',
     spreadsheet: 'Archivo Excel o CSV',
     spreadsheetHint: 'Columna A: palabra, B: frase (opcional), C: traducciones (opcional). La IA completa lo que falte.',
@@ -271,9 +272,9 @@ const es: Translations = {
     proLifetime: 'Pro – de por vida',
     gold: 'Gold',
     freeDetail: (limit) => `Hasta ${limit} palabras`,
-    proMonthlyDetail: (price) => `${price} / mes · palabras ilimitadas · pronunciación correcta con voz de Google · importar palabras de archivos, fotos y textos`,
-    goldDetail: (price) => `${price} / mes · palabras ilimitadas · voces naturales HD de Google · importación de palabras con reconocimiento de IA más preciso · frases de ejemplo y pausa para repetir en el test por voz · práctica de pronunciación`,
-    proLifetimeDetail: (price) => `${price} pago único · palabras ilimitadas · pronunciación correcta con voz de Google · importar palabras de archivos, fotos y textos`,
+    proMonthlyDetail: (price) => `${price} / mes · palabras ilimitadas · pronunciación correcta con voz de Google`,
+    goldDetail: (price) => `${price} / mes · palabras ilimitadas · voces naturales HD de Google · importar palabras de Excel, fotos y textos · frases de ejemplo y pausa para repetir en el test por voz · práctica de pronunciación`,
+    proLifetimeDetail: (price) => `${price} pago único · palabras ilimitadas · pronunciación correcta con voz de Google`,
     usage: (count, limit) => `Palabras guardadas: ${count} / ${limit}`,
     unlimited: (count) => `Palabras guardadas: ${count} · sin límite`,
     limitReached: (limit) =>
@@ -290,6 +291,13 @@ const es: Translations = {
     opening: 'Abriendo el pago…',
     manage: 'Pagos y facturas',
     billingError: "No se pudo abrir la página de pago. Inténtalo de nuevo.",
+  },
+  /** New app version notice (settings/appversion in Firestore). */
+  update: {
+    title: 'Nueva versión',
+    message: 'Hay una nueva versión de la aplicación.',
+    update: 'Actualizar',
+    close: 'Cerrar',
   },
 };
 

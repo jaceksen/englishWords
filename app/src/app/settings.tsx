@@ -11,6 +11,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { UI_LANGUAGES, type UiLanguageCode } from '@/i18n';
 import { deleteAccount } from '@/lib/account';
+import { getInstalledAppVersion, getReleaseDate } from '@/lib/app-version';
 import { useAuth } from '@/lib/auth';
 import { buyPlan, manageBilling } from '@/lib/billing';
 import { LANGUAGES, type LanguageCode } from '@/lib/languages';
@@ -322,6 +323,14 @@ export default function SettingsScreen() {
           )}
           <LegalLinks />
         </View>
+        <ThemedText type="small" themeColor="textSecondary" style={styles.version}>
+          {[
+            `${t.settings.version} ${getInstalledAppVersion() ?? '—'}`,
+            getReleaseDate()?.toLocaleDateString(uiLanguage.locale, { dateStyle: 'long' }),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </ThemedText>
       </ScrollView>
       <BusyModal message={deleting ? t.settings.deleting : null} />
     </ScreenBackground>
@@ -366,5 +375,8 @@ const styles = StyleSheet.create({
   optionLabel: {
     flex: 1,
     gap: Spacing.half,
+  },
+  version: {
+    textAlign: 'center',
   },
 });

@@ -32,7 +32,7 @@ type PhotoMode = 'marked' | 'auto';
 export default function ImportScreen() {
   const { user } = useAuth();
   const { t, languageCode, uiLanguageCode, level, plan } = useSettings();
-  // Free users see the import methods, but locked.
+  // Without Gold (e.g. opened by a link) the import methods are shown, but locked.
   const locked = !plan.importWords;
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

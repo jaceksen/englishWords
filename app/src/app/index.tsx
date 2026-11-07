@@ -147,6 +147,18 @@ export default function WordsScreen() {
     }
   }
 
+  // Import is Gold only: other plans get a notice with a way to the plans instead of the import screen.
+  function openImport() {
+    if (plan.importWords) {
+      router.push('/import');
+      return;
+    }
+    Alert.alert(`🔒 ${t.titles.import}`, t.import.locked, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.import.upgrade, onPress: () => router.push('/settings') },
+    ]);
+  }
+
   return (
     <ScreenBackground source={BACKGROUND} style={styles.container}>
       <Stack.Screen
@@ -154,7 +166,7 @@ export default function WordsScreen() {
           title: `${language.flag} ${t.titles.words}`,
           headerRight: () => (
             <View style={styles.headerIcons}>
-              <Pressable onPress={() => router.push('/import')} hitSlop={8} accessibilityLabel={t.words.import}>
+              <Pressable onPress={openImport} hitSlop={8} accessibilityLabel={t.words.import}>
                 <ThemedText style={styles.headerIcon}>📥</ThemedText>
               </Pressable>
               <Pressable onPress={() => router.push('/settings')} hitSlop={8} accessibilityLabel={t.words.settings}>

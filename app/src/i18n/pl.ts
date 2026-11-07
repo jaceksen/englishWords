@@ -220,6 +220,7 @@ const pl = {
     deleteError: 'Nie udało się usunąć konta. Spróbuj ponownie.',
     level: 'Twój poziom',
     levelHint: 'Według niego AI wybiera słówka z importowanych zdjęć i tekstów.',
+    version: 'Wersja',
   },
   /** Short names of the CEFR levels in settings. */
   levels: {
@@ -230,7 +231,7 @@ const pl = {
   },
   import: {
     intro: 'Dodaj wiele słówek naraz z pliku, zdjęcia lub tekstu.',
-    locked: 'Import słówek jest dostępny w planie Pro i wyższych.',
+    locked: 'Import słówek jest dostępny tylko w planie Gold.',
     upgrade: 'Zobacz plany',
     spreadsheet: 'Plik Excel lub CSV',
     spreadsheetHint: 'Kolumna A: słówko, B: zdanie (opcjonalnie), C: tłumaczenia (opcjonalnie). Brakujące uzupełni AI.',
@@ -275,9 +276,9 @@ const pl = {
     proLifetime: 'Pro – dożywotni',
     gold: 'Gold',
     freeDetail: (limit: number) => `Do ${limit} słówek`,
-    proMonthlyDetail: (price: string) => `${price} / miesiąc · bez limitu słówek · poprawna wymowa lektora Google · import słówek z pliku, zdjęć i tekstu`,
-    goldDetail: (price: string) => `${price} / miesiąc · bez limitu słówek · naturalne głosy Google HD · import słówek z dokładniejszym rozpoznawaniem AI · przykładowe zdania i przerwa na powtórzenie w quizie głosowym · ćwiczenie wymowy`,
-    proLifetimeDetail: (price: string) => `${price} jednorazowo · bez limitu słówek · poprawna wymowa lektora Google · import słówek z pliku, zdjęć i tekstu`,
+    proMonthlyDetail: (price: string) => `${price} / miesiąc · bez limitu słówek · poprawna wymowa lektora Google`,
+    goldDetail: (price: string) => `${price} / miesiąc · bez limitu słówek · naturalne głosy Google HD · import słówek z Excela, zdjęć i tekstu · przykładowe zdania i przerwa na powtórzenie w quizie głosowym · ćwiczenie wymowy`,
+    proLifetimeDetail: (price: string) => `${price} jednorazowo · bez limitu słówek · poprawna wymowa lektora Google`,
     usage: (count: number, limit: number) => `Zapisane słówka: ${count} / ${limit}`,
     unlimited: (count: number) => `Zapisane słówka: ${count} · bez limitu`,
     limitReached: (limit: number) =>
@@ -294,6 +295,13 @@ const pl = {
     opening: 'Otwieram płatność…',
     manage: 'Płatności i faktury',
     billingError: "Nie udało się otworzyć płatności. Spróbuj ponownie.",
+  },
+  /** New app version notice (settings/appversion in Firestore). */
+  update: {
+    title: 'Nowa wersja',
+    message: 'Jest nowa wersja aplikacji.',
+    update: 'Aktualizuj',
+    close: 'Zamknij',
   },
 };
 
